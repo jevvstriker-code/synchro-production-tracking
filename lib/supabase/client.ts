@@ -13,3 +13,5 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
   },
 });
+
+export const getBrowserSupabaseClient = () => supabase;

@@ -119,6 +119,19 @@ export const DELAY_REASONS = [
   "Tooling / Calibration Downtime"
 ];
 
+export interface AssemblyLine {
+  id: string;
+  name: string;
+  line_code?: string;
+  description?: string;
+  supervisor_name?: string;
+  capacity?: number;
+  is_active: boolean;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const ASSEMBLY_LINES = [
   "Assembly Line 1",
   "Assembly Line 2",

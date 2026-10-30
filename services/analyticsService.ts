@@ -81,8 +81,19 @@ export const analyticsService = {
       };
     });
 
-    // Assembly lines 1 to 7 breakdown
-    const lineBreakdown = ASSEMBLY_LINES.map((lineName) => {
+    // 4. Fetch Active Assembly Lines
+    const { data: dbLines } = await supabase
+      .from('assembly_lines')
+      .select('name')
+      .eq('is_active', true)
+      .order('display_order');
+
+    const lineNames = (dbLines && dbLines.length > 0)
+      ? dbLines.map((l: any) => l.name)
+      : Array.from(new Set([...ASSEMBLY_LINES, ...cards.map((c) => c.assemblyLine || c.assembly_line)]));
+
+    // Assembly lines breakdown
+    const lineBreakdown = lineNames.map((lineName) => {
       const linePanels = cards.filter((jc) => (jc.assemblyLine || jc.assembly_line) === lineName);
       const total = linePanels.length;
       const completed = linePanels.filter((jc) => jc.status === 'completed' || jc.status === 'dispatched').length;

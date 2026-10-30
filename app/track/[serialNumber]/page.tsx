@@ -7,6 +7,7 @@ import { JobCard, StageLog, PRODUCTION_STAGES } from '@/types';
 import { useAuth } from '@/components/AuthContext';
 import { FastStageWizardModal } from '@/components/FastStageWizardModal';
 import { LoginModal } from '@/components/LoginModal';
+import { PrintablePanelReportModal } from '@/components/PrintablePanelReportModal';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -33,7 +34,8 @@ import {
   ArrowLeft,
   Share2,
   Send,
-  Check
+  Check,
+  Printer
 } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
@@ -57,6 +59,7 @@ export default function TrackPanelPage({
   // Modals
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     loadPanelData();
@@ -227,6 +230,14 @@ export default function TrackPanelPage({
           </Link>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsReportModalOpen(true)}
+              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold px-3 py-1.5 rounded-xl text-xs transition flex items-center space-x-1"
+              title="Print Official Panel Dossier"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Print Report</span>
+            </button>
             <button
               onClick={handleShareWhatsApp}
               className="p-1.5 bg-blue-700 hover:bg-blue-800 rounded-lg text-white transition"
@@ -529,6 +540,13 @@ export default function TrackPanelPage({
         onClose={() => setIsLoginModalOpen(false)}
         onSuccess={handleLoginSuccess}
         message="Please log in with your Fitter/Supervisor PIN or credentials to update this panel's stage."
+      />
+
+      {/* Official Panel Report Modal */}
+      <PrintablePanelReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        jobCard={jobCard}
       />
     </div>
   );

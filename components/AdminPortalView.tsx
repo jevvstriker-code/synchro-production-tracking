@@ -6,7 +6,9 @@ import { userService } from '@/services/userService';
 import { auditService } from '@/services/auditService';
 import { jobCardService } from '@/services/jobCardService';
 import { stageLogService } from '@/services/stageLogService';
-import { AppUser, UserRole, AuditTrail, JobCard, StageLog, PRODUCTION_STAGES } from '@/types';
+import { AppUser, UserRole, AuditTrail, JobCard, StageLog, AssemblyLine, PRODUCTION_STAGES } from '@/types';
+import { assemblyLineService } from '@/services/assemblyLineService';
+import { AddAssemblyLineModal } from '@/components/AddAssemblyLineModal';
 import {
   Settings,
   Users,
@@ -25,7 +27,9 @@ import {
   Calendar,
   AlertTriangle,
   Lock,
-  Edit3
+  Edit3,
+  Factory,
+  Plus
 } from 'lucide-react';
 
 export function AdminPortalView() {
@@ -33,9 +37,11 @@ export function AdminPortalView() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditTrail[]>([]);
   const [jobCards, setJobCards] = useState<JobCard[]>([]);
+  const [assemblyLines, setAssemblyLines] = useState<AssemblyLine[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userSearch, setUserSearch] = useState<string>('');
-  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'audit' | 'timestamps' | 'system'>('users');
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'lines' | 'audit' | 'timestamps' | 'system'>('users');
+  const [isAddLineModalOpen, setIsAddLineModalOpen] = useState<boolean>(false);
 
   // Add / Edit User Modal state
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
@@ -68,14 +74,16 @@ export function AdminPortalView() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [uList, aLogs, jcList] = await Promise.all([
+      const [uList, aLogs, jcList, linesList] = await Promise.all([
         userService.getAllUsers(),
         auditService.getAuditLogs(100),
         jobCardService.getAllJobCards(),
+        assemblyLineService.getAll(),
       ]);
       setUsers(uList);
       setAuditLogs(aLogs);
       setJobCards(jcList);
+      setAssemblyLines(linesList);
       if (jcList.length > 0 && !selectedJcNo) {
         handleSelectJobCardForTimestamps(jcList[0].job_card_no);
       }
@@ -243,6 +251,15 @@ export function AdminPortalView() {
     }
   };
 
+  const handleToggleLineActive = async (lineId: string, currentStatus: boolean, lineName: string) => {
+    try {
+      await assemblyLineService.toggleActive(lineId, currentStatus, lineName, currentUser?.full_name || 'Admin');
+      await loadData();
+    } catch (e) {
+      console.error('Failed to toggle line status', e);
+    }
+  };
+
   const handleDeleteUser = async (userId: string, username: string) => {
     if (confirm(`Are you sure you want to delete user "${username}"?`)) {
       try {
@@ -316,6 +333,17 @@ export function AdminPortalView() {
         >
           <Users className="w-4 h-4" />
           <span>Staff Accounts ({users.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminTab('lines')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
+            activeAdminTab === 'lines'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          <Factory className="w-4 h-4" />
+          <span>Assembly Lines ({assemblyLines.length})</span>
         </button>
         <button
           onClick={() => setActiveAdminTab('timestamps')}
@@ -416,7 +444,7 @@ export function AdminPortalView() {
                       <td className="py-3 px-4 font-mono font-bold text-blue-700">
                         {u.pin_code}
                       </td>
-                      <td className="py-3 px-4 text-slate-500">{u.phone || '—'}</td>
+                      <td className="py-3 px-4 text-slate-500">{u.phone || 'â€”'}</td>
                       <td className="py-3 px-4">
                         <button
                           onClick={() => handleToggleUserActive(u.id, u.is_active)}
@@ -458,6 +486,90 @@ export function AdminPortalView() {
         </div>
       )}
 
+      {/* Tab: Assembly Lines Management */}
+      {activeAdminTab === 'lines' && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+            <div>
+              <h3 className="font-bold text-sm text-slate-900 flex items-center space-x-1.5">
+                <Factory className="w-4 h-4 text-blue-600" />
+                <span>Shop Floor Assembly Lines & Workstations</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Configure manufacturing lines, capacities, and active floor routing
+              </p>
+            </div>
+            <button
+              onClick={() => setIsAddLineModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Assembly Line</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                  <th className="py-2.5 px-4">Line Name</th>
+                  <th className="py-2.5 px-4">Code</th>
+                  <th className="py-2.5 px-4">Supervisor</th>
+                  <th className="py-2.5 px-4">Capacity</th>
+                  <th className="py-2.5 px-4">Active Panels</th>
+                  <th className="py-2.5 px-4">Status</th>
+                  <th className="py-2.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {assemblyLines.map((line) => {
+                  const linePanels = jobCards.filter(
+                    (j) => (j.assemblyLine || j.assembly_line) === line.name
+                  );
+                  const activeCount = linePanels.filter(
+                    (j) => j.status === 'in_progress' || j.status === 'delayed'
+                  ).length;
+
+                  return (
+                    <tr key={line.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-4 font-bold text-slate-900">{line.name}</td>
+                      <td className="py-3 px-4 font-mono text-blue-700 font-semibold">{line.line_code || '—'}</td>
+                      <td className="py-3 px-4 text-slate-800">{line.supervisor_name || 'General Supervisor'}</td>
+                      <td className="py-3 px-4 font-mono">{line.capacity || 10} panels</td>
+                      <td className="py-3 px-4 font-mono font-bold text-blue-600">{activeCount}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => handleToggleLineActive(line.id, line.is_active, line.name)}
+                          className="flex items-center space-x-1 font-semibold"
+                        >
+                          {line.is_active ? (
+                            <span className="text-emerald-600 flex items-center">
+                              <CheckCircle className="w-3.5 h-3.5 mr-1" /> Active
+                            </span>
+                          ) : (
+                            <span className="text-red-500 flex items-center">
+                              <XCircle className="w-3.5 h-3.5 mr-1" /> Inactive
+                            </span>
+                          )}
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => handleToggleLineActive(line.id, line.is_active, line.name)}
+                          className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 transition"
+                        >
+                          {line.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Tab 2: Timestamp Correction Console (Admin Privilege) */}
       {activeAdminTab === 'timestamps' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
@@ -482,7 +594,7 @@ export function AdminPortalView() {
               >
                 {jobCards.map((j) => (
                   <option key={j.id} value={j.job_card_no}>
-                    {j.job_card_no} — {j.product_name}
+                    {j.job_card_no} â€” {j.product_name}
                   </option>
                 ))}
               </select>
@@ -493,7 +605,7 @@ export function AdminPortalView() {
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap justify-between items-center text-xs text-slate-700 gap-2">
               <div>
                 <span className="text-slate-400">Job Card:</span>{' '}
-                <strong className="font-mono text-blue-700">{selectedPanel.job_card_no}</strong> •{' '}
+                <strong className="font-mono text-blue-700">{selectedPanel.job_card_no}</strong> â€¢{' '}
                 <strong>{selectedPanel.product_name}</strong>
               </div>
               <div>
@@ -501,7 +613,7 @@ export function AdminPortalView() {
                 <strong className="bg-white px-2 py-0.5 rounded border border-slate-200">
                   {selectedPanel.assemblyLine}
                 </strong>{' '}
-                • <span className="text-slate-400">Status:</span>{' '}
+                â€¢ <span className="text-slate-400">Status:</span>{' '}
                 <strong className="capitalize text-emerald-700">{selectedPanel.status}</strong>
               </div>
             </div>
@@ -533,15 +645,15 @@ export function AdminPortalView() {
                         {idx + 1}. {st.stage_name}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-slate-600">
-                        {st.start_date ? `${st.start_date} ${st.start_time || ''}` : '—'}
+                        {st.start_date ? `${st.start_date} ${st.start_time || ''}` : 'â€”'}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-slate-600">
-                        {st.end_date ? `${st.end_date} ${st.end_time || ''}` : '—'}
+                        {st.end_date ? `${st.end_date} ${st.end_time || ''}` : 'â€”'}
                       </td>
                       <td className="py-2.5 px-3 font-mono font-bold text-blue-700">
-                        {st.duration_display || (st.duration_hours ? `${st.duration_hours}h` : '—')}
+                        {st.duration_display || (st.duration_hours ? `${st.duration_hours}h` : 'â€”')}
                       </td>
-                      <td className="py-2.5 px-3">{st.operator_name || '—'}</td>
+                      <td className="py-2.5 px-3">{st.operator_name || 'â€”'}</td>
                       <td className="py-2.5 px-3">
                         {st.is_admin_override ? (
                           <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
@@ -700,7 +812,7 @@ export function AdminPortalView() {
                     <td className="py-2.5 px-4 font-mono font-bold text-blue-600">{log.job_card_no}</td>
                     <td className="py-2.5 px-4 font-semibold text-slate-900">{log.action}</td>
                     <td className="py-2.5 px-4 text-slate-600">{log.actor_name} ({log.actor_role})</td>
-                    <td className="py-2.5 px-4 text-slate-500">{log.details || '—'}</td>
+                    <td className="py-2.5 px-4 text-slate-500">{log.details || 'â€”'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -828,7 +940,7 @@ export function AdminPortalView() {
                   </label>
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500"
@@ -855,6 +967,14 @@ export function AdminPortalView() {
           </div>
         </div>
       )}
+
+      {/* Add Assembly Line Modal */}
+      <AddAssemblyLineModal
+        isOpen={isAddLineModalOpen}
+        onClose={() => setIsAddLineModalOpen(false)}
+        onSuccess={loadData}
+        existingCount={assemblyLines.length}
+      />
     </div>
   );
 }

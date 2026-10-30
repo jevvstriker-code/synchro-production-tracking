@@ -16,6 +16,20 @@
   body {
     background: white !important;
     color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  @page {
+    margin: 8mm;
+    size: auto;
+  }
+  .page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 
