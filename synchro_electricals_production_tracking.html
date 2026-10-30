@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Synchro Electricals Pvt. Ltd. - Production Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Trends & Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- QRCode.js for generating QR codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+        }
+        /* Mobile usability & responsive adjustments */
+        input, select, textarea {
+            font-size: 16px !important; /* Prevents iOS auto-zoom on input focus */
+        }
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans h-full flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-blue-600 text-white border-b border-blue-700 sticky top-0 z-40 shadow-md no-print">
+        <div class="w-full max-w-full px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                <div class="bg-white p-2 rounded-lg text-blue-600 font-bold text-xl shadow-md flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 shrink-0">
+                    <i class="fa-solid fa-bolt text-sm sm:text-base"></i>
+                </div>
+                <div class="truncate">
+                    <h1 class="font-bold text-sm sm:text-base lg:text-lg leading-tight tracking-tight text-white truncate">Synchro Electricals Pvt. Ltd.</h1>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs (Desktop & Tablet) -->
+            <nav class="hidden md:flex space-x-1 lg:space-x-2 shrink-0">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-2.5 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm flex items-center space-x-1.5 lg:space-x-2">
+                    <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('qr-generator')" id="nav-qr-generator" class="tab-btn px-2.5 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white flex items-center space-x-1.5 lg:space-x-2">
+                    <i class="fa-solid fa-qrcode"></i><span>Job Card & QR</span>
+                </button>
+                <button onclick="switchTab('assembly-lines')" id="nav-assembly-lines" class="tab-btn px-2.5 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white flex items-center space-x-1.5 lg:space-x-2">
+                    <i class="fa-solid fa-industry"></i><span>Assembly Lines</span>
+                </button>
+                <button onclick="switchTab('audit-trail')" id="nav-audit-trail" class="tab-btn px-2.5 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white flex items-center space-x-1.5 lg:space-x-2">
+                    <i class="fa-solid fa-shield-halved"></i><span>Audit Trail</span>
+                </button>
+                <button onclick="switchTab('rework-register')" id="nav-rework-register" class="tab-btn px-2.5 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white flex items-center space-x-1.5 lg:space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i><span>Rework</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="tab-btn px-2.5 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white flex items-center space-x-1.5 lg:space-x-2">
+                    <i class="fa-solid fa-file-lines"></i><span>Reports</span>
+                </button>
+            </nav>
+
+            <!-- Quick Action / Scanner -->
+            <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+                <button onclick="openLiveCameraScannerModal()" class="bg-white hover:bg-blue-50 text-blue-700 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition flex items-center space-x-1.5 sm:space-x-2">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Scan QR</span>
+                </button>
+                <button onclick="openSupervisorAuthModal()" class="bg-blue-700 hover:bg-blue-800 text-white px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium border border-blue-500 flex items-center space-x-1.5 sm:space-x-2">
+                    <i class="fa-solid fa-user-shield text-white" id="auth-shield-icon"></i>
+                    <span id="auth-status-text" class="hidden sm:inline">Supervisor Login</span>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Navigation Sub-bar -->
+        <div class="md:hidden flex overflow-x-auto px-3 py-2 bg-blue-700 border-t border-blue-500 space-x-1.5 shadow-inner">
+            <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap bg-white text-blue-700">Dashboard</button>
+            <button onclick="switchTab('qr-generator')" id="mob-nav-qr-generator" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Job Card</button>
+            <button onclick="switchTab('assembly-lines')" id="mob-nav-assembly-lines" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Lines</button>
+            <button onclick="switchTab('audit-trail')" id="mob-nav-audit-trail" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Audit</button>
+            <button onclick="switchTab('rework-register')" id="mob-nav-rework-register" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Rework</button>
+            <button onclick="switchTab('reports')" id="mob-nav-reports" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Reports</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 w-full max-w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto">
+
+        <!-- ================= TAB 1: DASHBOARD ================= -->
+        <section id="tab-content-dashboard" class="space-y-4 sm:space-y-6">
+            <!-- Alert Notification Banner for Delayed Panels -->
+            <div id="dashboard-alert-banner" class="hidden bg-blue-50 border-l-4 border-blue-600 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-triangle-exclamation text-blue-600 text-xl"></i>
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-blue-900">Production Bottleneck Alert</h4>
+                        <p id="dashboard-alert-msg" class="text-xs text-blue-800">Panels detected exceeding standard lead time thresholds.</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('assembly-lines')" class="text-xs font-bold text-blue-700 hover:underline">Investigate &rarr;</button>
+            </div>
+
+            <!-- Top Stats Row -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div class="bg-white border border-slate-200 p-3.5 sm:p-4 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Active Panels</span>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span id="stat-active-panels" class="text-xl sm:text-2xl font-bold text-slate-900">0</span>
+                        <span class="ml-1.5 sm:ml-2 text-[11px] sm:text-xs text-slate-500">In Production</span>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 p-3.5 sm:p-4 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Dispatched Today</span>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span id="stat-completed-today" class="text-xl sm:text-2xl font-bold text-slate-900">0</span>
+                        <span class="ml-1.5 sm:ml-2 text-[11px] sm:text-xs text-blue-600 font-medium">Ready / Shipped</span>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 p-3.5 sm:p-4 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Delayed Panels</span>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span id="stat-delayed-panels" class="text-xl sm:text-2xl font-bold text-slate-900">0</span>
+                        <span class="ml-1.5 sm:ml-2 text-[11px] sm:text-xs text-blue-600 font-medium">Needs Review</span>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 p-3.5 sm:p-4 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Avg Lead Time</span>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-stopwatch"></i></div>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span id="stat-avg-cycle" class="text-xl sm:text-2xl font-bold text-slate-900">0h</span>
+                        <span class="ml-1.5 sm:ml-2 text-[11px] sm:text-xs text-slate-500">Per Panel</span>
+                    </div>
+                </div>
+
+                <div class="col-span-2 sm:col-span-1 bg-white border border-slate-200 p-3.5 sm:p-4 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Rework Cases</span>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-rotate"></i></div>
+                    </div>
+                    <div class="mt-2 flex items-baseline">
+                        <span id="stat-rework-count" class="text-xl sm:text-2xl font-bold text-slate-900">0</span>
+                        <span class="ml-1.5 sm:ml-2 text-[11px] sm:text-xs text-blue-600 font-medium">Logged</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assembly Lines Main Cards Grid (Lines 1 to 7) -->
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm sm:text-lg font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-industry text-blue-600"></i>
+                        <span>Assembly Lines 1 to 7 Status</span>
+                    </h2>
+                    <span class="text-xs text-slate-500 hidden sm:inline">Click any line to inspect or assign panels</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4" id="dashboard-lines-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Charts & Bottleneck Analysis Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <!-- Bottleneck Stage Distribution Chart -->
+                <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col">
+                    <h2 class="text-sm sm:text-base font-semibold text-slate-900 mb-1 flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-bar text-blue-600"></i>
+                        <span>Production Bottlenecks (Delay Causes)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Identifies stages generating the highest cumulative delay time.</p>
+                    <div class="relative w-full h-64 sm:h-72 flex items-center justify-center">
+                        <canvas id="delayReasonsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stage Velocity Chart -->
+                <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col">
+                    <h2 class="text-sm sm:text-base font-semibold text-slate-900 mb-1 flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-line text-blue-600"></i>
+                        <span>Stage Progress Velocity</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Number of panels successfully passing each production stage.</p>
+                    <div class="relative w-full h-64 sm:h-72 flex items-center justify-center">
+                        <canvas id="stageVelocityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Active Panels Progress Table -->
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                    <h2 class="text-sm sm:text-lg font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-bars-progress text-blue-600"></i>
+                        <span>Live Panel Production Tracker</span>
+                    </h2>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="dashboard-search" oninput="renderDashboardTable()" placeholder="Search Job Card or Product..." class="w-full sm:w-64 bg-white border border-slate-300 text-xs text-slate-800 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[650px]">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                                <th class="py-3 px-4">Job Card No.</th>
+                                <th class="py-3 px-4">Product Name</th>
+                                <th class="py-3 px-4">Assembly Line</th>
+                                <th class="py-3 px-4">Current Stage</th>
+                                <th class="py-3 px-4">Progress</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-panels-tbody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: QR & JOB CARD CREATOR ================= -->
+        <section id="tab-content-qr-generator" class="hidden space-y-4 sm:space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <!-- Job Card Creation Form -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+                        <h2 class="text-sm sm:text-lg font-bold text-slate-900 flex items-center space-x-2">
+                            <i class="fa-solid fa-file-circle-plus text-blue-600"></i>
+                            <span>Create New Job Card & Generate QR Code</span>
+                        </h2>
+                        <span class="text-xs text-slate-500 font-mono">Industrial Log</span>
+                    </div>
+
+                    <form id="jobCardForm" onsubmit="handleCreateJobCard(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Job Card No. *</label>
+                            <input type="text" id="jc-no" required value="SE26090450" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Customer Code</label>
+                            <input type="text" id="jc-cust-code" value="CUST-050" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Date *</label>
+                            <input type="date" id="jc-date" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Lot Quantity *</label>
+                            <input type="number" id="jc-lot-qty" required value="1" min="1" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Product Name / Description *</label>
+                            <input type="text" id="jc-product-name" required value="800 KVAR APFC Panel" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Panel Type *</label>
+                            <select id="jc-panel-type" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                                <option value="Indoor">Indoor</option>
+                                <option value="Outdoor">Outdoor</option>
+                                <option value="HT Panel">HT Panel</option>
+                                <option value="LT Distribution">LT Distribution</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Assembly Line *</label>
+                            <select id="jc-assembly-line" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                                <option value="Assembly Line 1">Assembly Line 1</option>
+                                <option value="Assembly Line 2">Assembly Line 2</option>
+                                <option value="Assembly Line 3">Assembly Line 3</option>
+                                <option value="Assembly Line 4">Assembly Line 4</option>
+                                <option value="Assembly Line 5">Assembly Line 5</option>
+                                <option value="Assembly Line 6">Assembly Line 6</option>
+                                <option value="Assembly Line 7">Assembly Line 7</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Production Start Date *</label>
+                            <input type="date" id="jc-start-date" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Production End Date (Expected)</label>
+                            <input type="date" id="jc-end-date" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">PPC Name *</label>
+                            <input type="text" id="jc-ppc-name" required value="Rajesh Sharma" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Production Supervisor Name *</label>
+                            <input type="text" id="jc-sup-name" required value="Amit Verma" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="sm:col-span-2 pt-3 flex justify-end space-x-3">
+                            <button type="reset" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition">Reset</button>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-xs sm:text-sm font-medium shadow transition flex items-center space-x-2">
+                                <i class="fa-solid fa-qrcode"></i>
+                                <span>Generate Job Card & QR</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- QR Code & Printable Job Card Preview -->
+                <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+                            <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-print text-blue-600"></i>
+                               <span>QR Code & Sticker Preview</span>
+                            </h2>
+                            <button onclick="printJobCard()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-print"></i><span>Print Sticker</span>
+                            </button>
+                        </div>
+
+                        <!-- Printable Sticker Container -->
+                        <div id="printable-jobcard-sticker" class="bg-white text-slate-900 p-4 rounded-xl border-2 border-dashed border-slate-300 shadow-inner flex flex-col items-center text-center space-y-3">
+                            <div class="w-full flex justify-between items-center border-b pb-2">
+                                <span class="font-bold text-xs text-blue-700">SYNCHRO ELECTRICALS PVT. LTD.</span>
+                                <span class="text-[10px] text-slate-500 font-mono">JOB CARD QR</span>
+                            </div>
+                            <div id="qr-code-container" class="bg-white p-2 border rounded shadow-sm flex items-center justify-center">
+                                <!-- Generated QR code inserted here -->
+                            </div>
+                            <div class="w-full text-left space-y-1 text-xs">
+                                <div class="flex justify-between font-bold border-b pb-1">
+                                    <span id="preview-jc-no">JC: SE26090450</span>
+                                    <span id="preview-line">Line 1</span>
+                                </div>
+                                <div class="text-[11px] font-semibold text-slate-900 truncate" id="preview-product">800 KVAR APFC Panel</div>
+                                <div class="flex justify-between text-[10px] text-slate-600">
+                                    <span id="preview-type">Type: Indoor</span>
+                                    <span id="preview-date">Date: 01/09/2026</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-slate-600 border-t pt-1">
+                                    <span>Sup: <span id="preview-sup">Amit Verma</span></span>
+                                    <span>PPC: <span id="preview-ppc">Rajesh Sharma</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-2">
+                        <p><i class="fa-solid fa-circle-info text-blue-600 mr-1"></i> Scan this physical panel QR code with your phone camera to instantly launch the secure step-by-step update wizard.</p>
+                        <div class="flex space-x-2 pt-1">
+                            <button onclick="shareViaWhatsApp()" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-800 px-2.5 py-2 rounded font-medium text-center transition flex items-center justify-center space-x-1.5">
+                                <i class="fa-brands fa-whatsapp text-blue-600"></i><span>WhatsApp</span>
+                            </button>
+                            <button onclick="shareViaEmail()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-2 rounded font-medium text-center transition flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-envelope text-slate-600"></i><span>Email</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Job Cards List -->
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-blue-600"></i>
+                        <span>Active Job Cards Registry</span>
+                    </h3>
+                    <span id="job-cards-count" class="text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">0 Cards</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                                <th class="py-3 px-4">Job Card No.</th>
+                                <th class="py-3 px-4">Product Name</th>
+                                <th class="py-3 px-4">Assembly Line</th>
+                                <th class="py-3 px-4">Panel Type</th>
+                                <th class="py-3 px-4">Date</th>
+                                <th class="py-3 px-4">Supervisor / PPC</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="job-cards-registry-tbody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: ASSEMBLY LINES (1-7) ================= -->
+        <section id="tab-content-assembly-lines" class="hidden space-y-4 sm:space-y-6">
+            <!-- Line Selector Buttons -->
+            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-industry text-blue-600"></i>
+                        <span>Assembly Line Workstations (1 to 7)</span>
+                    </h2>
+                    <span id="selected-line-indicator" class="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200 font-medium">Assembly Line 1</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2" id="assembly-line-tabs-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Panels List in Selected Line -->
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3 pb-3 border-b border-slate-200">
+                    <div>
+                        <h3 id="current-line-title" class="text-base sm:text-lg font-bold text-slate-900">Assembly Line 1 Panels</h3>
+                        <p class="text-xs text-slate-500">Track 11 industrial production stages, start/end date & time, operator signatures, and delay reasons.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openNewPanelModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium shadow transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-plus"></i><span>Assign Panel to Line</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="line-panels-container" class="space-y-6">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: AUDIT TRAIL ================= -->
+        <section id="tab-content-audit-trail" class="hidden space-y-4 sm:space-y-6">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 gap-2">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center space-x-2">
+                            <i class="fa-solid fa-shield-halved text-blue-600"></i>
+                            <span>Enterprise Audit Trail & System Activity Log</span>
+                        </h2>
+                        <p class="text-xs text-slate-500">Tamper-evident record of all production stage updates, supervisor overrides, and timestamps.</p>
+                    </div>
+                    <button onclick="clearAuditTrail()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-medium transition">Clear Audit Logs</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[650px]">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                                <th class="py-3 px-4">Timestamp</th>
+                                <th class="py-3 px-4">Job Card No.</th>
+                                <th class="py-3 px-4">Action / Stage Updated</th>
+                                <th class="py-3 px-4">Supervisor / Operator</th>
+                                <th class="py-3 px-4">Status / IP Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-trail-tbody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 5: REWORK & REJECTION REGISTER ================= -->
+        <section id="tab-content-rework-register" class="hidden space-y-4 sm:space-y-6">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 pb-3 border-b border-slate-200 gap-3">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center space-x-2">
+                            <i class="fa-solid fa-triangle-exclamation text-blue-600"></i>
+                            <span>Rework & Rejection Log Register</span>
+                        </h2>
+                        <p class="text-xs text-slate-500">Process-wise rework reasons, corrective actions, and supervisor sign-offs.</p>
+                    </div>
+                    <button onclick="openAddReworkModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium shadow transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i><span>Log Rework / Rejection</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                                <th class="py-3 px-4">Job Card No.</th>
+                                <th class="py-3 px-4">Product Name</th>
+                                <th class="py-3 px-4">Assembly Line</th>
+                                <th class="py-3 px-4">Process Name</th>
+                                <th class="py-3 px-4">Re-work / Rejection Reason</th>
+                                <th class="py-3 px-4">Supervisor Sign-off</th>
+                                <th class="py-3 px-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rework-register-tbody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 6: REPORTS & ANALYTICS ================= -->
+        <section id="tab-content-reports" class="hidden space-y-4 sm:space-y-6">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200 gap-4">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center space-x-2">
+                            <i class="fa-solid fa-file-invoice text-blue-600"></i>
+                            <span>Daily Production Report & Analytics Summary</span>
+                        </h2>
+                    </div>
+                    <div class="flex flex-wrap gap-2 sm:space-x-3">
+                        <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-2">
+                            <i class="fa-solid fa-print"></i><span>Print Full Report</span>
+                        </button>
+                        <button onclick="exportProductionDataJSON()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium shadow transition flex items-center space-x-2">
+                            <i class="fa-solid fa-download"></i><span>Export Backup</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 block font-medium">Total Registered Job Cards</span>
+                        <span id="report-total-cards" class="text-2xl font-bold text-slate-900 mt-1 block">0</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 block font-medium">Total Completed & Dispatched</span>
+                        <span id="report-total-dispatched" class="text-2xl font-bold text-blue-600 mt-1 block">0</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 block font-medium">Total Rework Rate</span>
+                        <span id="report-rework-rate" class="text-2xl font-bold text-blue-600 mt-1 block">0%</span>
+                    </div>
+                </div>
+
+                <!-- CSV Backup & Restore Section -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-file-csv text-blue-600"></i>
+                        <span>CSV Backup & Dataset Management</span>
+                    </h3>
+                    <p class="text-xs text-slate-500">Export your complete production job cards dataset to CSV format for Excel/Google Sheets reporting, or import a CSV backup file to restore records.</p>
+                    <div class="flex flex-wrap gap-2.5 pt-2">
+                        <button onclick="exportProductionDataCSV()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center space-x-2">
+                            <i class="fa-solid fa-file-arrow-down"></i><span>Export Job Cards CSV</span>
+                        </button>
+                        <button onclick="exportAuditTrailCSV()" class="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center space-x-2">
+                            <i class="fa-solid fa-file-arrow-down"></i><span>Export Audit Trail CSV</span>
+                        </button>
+                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center space-x-2 cursor-pointer">
+                            <i class="fa-solid fa-file-arrow-up"></i><span>Import CSV Backup</span>
+                            <input type="file" id="csv-file-input" accept=".csv" onchange="importProductionDataCSV(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Assembly Line Efficiency Breakdown -->
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 mb-3">Assembly Line Performance Metrics (Lines 1 to 7)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
+                                    <th class="py-3 px-4">Assembly Line</th>
+                                    <th class="py-3 px-4">Active Panels</th>
+                                    <th class="py-3 px-4">Completed Panels</th>
+                                    <th class="py-3 px-4">Total Delays Logged</th>
+                                    <th class="py-3 px-4">Efficiency Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-lines-tbody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- HTML5 Camera QR Code Scanner Modal -->
+    <div id="modal-camera-scanner" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-camera text-blue-600"></i>
+                    <span>Live Camera QR Scanner</span>
+                </h3>
+                <button onclick="closeLiveCameraScannerModal()" class="text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Point your phone camera at the physical panel QR code to immediately launch the secure step-by-step update wizard.</p>
+            
+            <div id="qr-reader" class="w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-900 min-h-[220px]"></div>
+
+            <div class="space-y-2 pt-1">
+                <div class="text-center text-xs text-slate-400">- OR Select from Active Job Cards -</div>
+                <select id="scanner-jc-select" onchange="selectJobCardFromDropdown(this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
+                <button onclick="closeLiveCameraScannerModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium">Cancel / Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile-First Step-by-Step Production Update Wizard Modal -->
+    <div id="modal-qr-status-wizard" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-4 my-auto max-h-[95vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div>
+                    <span id="wizard-jc-badge" class="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded font-mono font-bold">SE26090384</span>
+                    <h3 id="wizard-product-title" class="text-sm sm:text-base font-bold text-slate-900 mt-1">1025 KVAR APFC Panel</h3>
+                </div>
+                <button onclick="closeQrWizardModal()" class="text-slate-400 hover:text-slate-700 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <!-- Wizard Progress Indicator -->
+            <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                <div>
+                    <span class="text-slate-500">Step:</span>
+                    <span id="wizard-step-indicator" class="font-bold text-blue-600 ml-1">Step 1 of 11</span>
+                </div>
+                <div class="font-medium text-slate-700" id="wizard-step-name">Material Issue</div>
+            </div>
+
+            <!-- Wizard Content Area (Phone Friendly with Calendar & Clock Date/Time inputs) -->
+            <div id="wizard-step-content" class="flex-1 overflow-y-auto space-y-3.5 sm:space-y-4 py-2">
+                <!-- Dynamically populated step form -->
+            </div>
+
+            <!-- Wizard Navigation Footer -->
+            <div class="flex items-center justify-between pt-3 border-t border-slate-200">
+                <button id="wizard-prev-btn" onclick="wizardPrevStep()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+                    <i class="fa-solid fa-arrow-left"></i><span>Previous</span>
+                </button>
+                <div class="text-xs text-slate-500 font-medium hidden sm:block">Strict Step-by-Step Verification</div>
+                <button id="wizard-next-btn" onclick="wizardNextStep()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-5 py-2 rounded-lg text-xs font-medium shadow transition flex items-center space-x-1">
+                    <span>Next Stage</span><i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supervisor Authentication Modal -->
+    <div id="modal-supervisor-auth" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-shield text-blue-600"></i>
+                    <span>Supervisor PIN Authentication</span>
+                </h3>
+                <button onclick="closeSupervisorAuthModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Required to update production data or override stage timestamps (Default PIN: <span class="text-blue-600 font-mono font-bold">1234</span>).</p>
+            
+            <div class="space-y-3">
+                <label class="block text-xs font-medium text-slate-700">Enter Supervisor PIN</label>
+                <input type="password" id="supervisor-pin-input" placeholder="••••" maxlength="6" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-center text-xl tracking-widest font-mono text-slate-800 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
+                <button onclick="closeSupervisorAuthModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium">Cancel</button>
+                <button onclick="verifySupervisorPin()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-xs font-medium shadow">Authorize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Panel Modal -->
+    <div id="modal-assign-panel" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-plus text-blue-600"></i>
+                    <span>Assign Panel to Assembly Line</span>
+                </h3>
+                <button onclick="closeNewPanelModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Select an existing Job Card to assign to the current assembly workstation.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Select Job Card</label>
+                    <select id="assign-jc-select" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Target Assembly Line</label>
+                    <select id="assign-line-select" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        <option value="Assembly Line 1">Assembly Line 1</option>
+                        <option value="Assembly Line 2">Assembly Line 2</option>
+                        <option value="Assembly Line 3">Assembly Line 3</option>
+                        <option value="Assembly Line 4">Assembly Line 4</option>
+                        <option value="Assembly Line 5">Assembly Line 5</option>
+                        <option value="Assembly Line 6">Assembly Line 6</option>
+                        <option value="Assembly Line 7">Assembly Line 7</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
+                <button onclick="closeNewPanelModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium">Cancel</button>
+                <button onclick="submitAssignPanel()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-xs font-medium shadow">Assign Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Rework Log Modal -->
+    <div id="modal-rework" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation text-blue-600"></i>
+                    <span>Log Rework or Rejection</span>
+                </h3>
+                <button onclick="closeAddReworkModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="reworkForm" onsubmit="submitReworkForm(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Job Card No. *</label>
+                    <select id="rework-jc-select" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Process Name / Stage *</label>
+                    <select id="rework-process" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        <option value="Material Issue">1. Material Issue</option>
+                        <option value="Fabrication Assembly">2. Fabrication Assembly</option>
+                        <option value="Switch Gear Mounting">3. Switch Gear Mounting</option>
+                        <option value="Busbar Assembly">4. Busbar Assembly</option>
+                        <option value="Wiring">5. Wiring</option>
+                        <option value="Isolation Work">6. Isolation Work</option>
+                        <option value="Testing">7. Testing</option>
+                        <option value="Label / Sticker Fixing">8. Label / Sticker Fixing</option>
+                        <option value="Packing">9. Packing</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Re-work / Rejection Reason *</label>
+                    <textarea id="rework-reason" required rows="2" placeholder="Describe rework reason..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Supervisor Name (Sign-off) *</label>
+                    <input type="text" id="rework-supervisor" required value="Amit Verma" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
+                    <button type="button" onclick="closeAddReworkModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-xs font-medium shadow">Save Rework Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-notification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-white border border-slate-300 text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3">
+        <div id="toast-icon" class="text-blue-600 text-lg"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+            <h4 id="toast-title" class="font-bold text-sm">Success</h4>
+            <p id="toast-msg" class="text-xs text-slate-600">Action completed successfully.</p>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+    <script>
+        // Default 11 Industrial Production Stages
+        const PRODUCTION_STAGES = [
+            "Material Issue",
+            "Fabrication Assembly",
+            "Switch Gear Mounting",
+            "Busbar Assembly",
+            "Wiring",
+            "Isolation Work",
+            "Testing",
+            "Label / Sticker Fixing",
+            "Packing",
+            "Customer Confirmation for Dispatch",
+            "Dispatch"
+        ];
+
+        // Delay Reasons list
+        const DELAY_REASONS_LIST = [
+            "None",
+            "Material Shortage / Delay",
+            "Fabrication Complexity / Alignment",
+            "Switchgear Delivery Delay",
+            "Busbar Bending / Fitting Issue",
+            "Wiring Complexity / Layout Issue",
+            "Testing Failure / Rework",
+            "Customer Approval Pending",
+            "Operator Shift Change / Shortage"
+        ];
+
+        // Generate 75 realistic panels across Lines 1 to 7 (~10-11 per line) for complete testing
+        function generateRealisticDataset() {
+            let panels = [];
+            let supervisors = ["Amit Verma", "Sandeep Kumar", "Vikram Singh", "Manoj Sharma", "Rakesh Gupta", "Sunil Kumar", "Anil Sharma"];
+            let products = [
+                "400 KVAR APFC Panel", "600 KVAR APFC Panel", "800 KVAR APFC Panel", 
+                "1025 KVAR APFC Panel", "1200 KVAR APFC Panel", "1500 KVAR APFC Panel", 
+                "HT Protection Panel", "LT Distribution Panel", "Solar Integration LT Panel"
+            ];
+            let types = ["Indoor", "Outdoor", "HT Panel", "LT Distribution"];
+            let operators = ["Ramesh K.", "Suresh P.", "Manoj T.", "Vikas R.", "Deepak S.", "Anil K.", "Davinder"];
+
+            let counter = 301;
+            for (let lineNum = 1; lineNum <= 7; lineNum++) {
+                let lineName = `Assembly Line ${lineNum}`;
+                for (let p = 1; p <= 11; p++) {
+                    let jcNo = `SE26090${counter}`;
+                    let prodName = products[(counter + p) % products.length];
+                    let panelType = types[(counter) % types.length];
+                    let sup = supervisors[(lineNum - 1) % supervisors.length];
+                    
+                    let stages = {};
+                    let isCompleted = p <= 7; // first 7 completed, others in progress
+                    
+                    PRODUCTION_STAGES.forEach((stageName, sIdx) => {
+                        if (isCompleted || sIdx < 5) {
+                            let dayOffset = Math.min(sIdx + 1, 28);
+                            let dateStr = `2026-09-${String(dayOffset).padStart(2, '0')}`;
+                            let delay = (counter % 7 === 0 && sIdx === 3) ? "Busbar Bending / Fitting Issue" : ((counter % 5 === 0 && sIdx === 1) ? "Material Shortage / Delay" : "None");
+                            stages[stageName] = {
+                                startDate: dateStr,
+                                startTime: "09:00",
+                                endDate: dateStr,
+                                endTime: "15:00",
+                                timeHrs: (Math.random() * 3 + 1).toFixed(1) + "h",
+                                operator: operators[sIdx % operators.length],
+                                delayReason: delay
+                            };
+                        } else if (isCompleted === false && sIdx === 5) {
+                            stages[stageName] = {
+                                startDate: "2026-09-25",
+                                startTime: "10:00",
+                                endDate: "",
+                                endTime: "",
+                                timeHrs: "",
+                                operator: operators[5],
+                                delayReason: "None"
+                            };
+                        } else {
+                            stages[stageName] = {
+                                startDate: "", startTime: "", endDate: "", endTime: "", timeHrs: "", operator: "", delayReason: "None"
+                            };
+                        }
+                    });
+
+                    panels.push({
+                        jobCardNo: jcNo,
+                        customerCode: `CUST-0${(counter % 40) + 1}`,
+                        date: "2026-09-01",
+                        productName: prodName,
+                        panelType: panelType,
+                        lotQty: (counter % 3) + 1,
+                        assemblyLine: lineName,
+                        productionStartDate: "2026-09-02",
+                        productionEndDate: isCompleted ? "2026-09-25" : "",
+                        ppcName: "Rajesh Sharma",
+                        supervisorName: sup,
+                        stages: stages
+                    });
+                    counter++;
+                }
+            }
+            return panels;
+        }
+
+        let INITIAL_MOCK_JOB_CARDS = generateRealisticDataset();
+
+        let INITIAL_MOCK_REWORK_LOGS = [
+            {
+                jobCardNo: "SE26090304",
+                productName: "800 KVAR APFC Panel",
+                assemblyLine: "Assembly Line 1",
+                processName: "Testing",
+                reason: "High voltage leakage noted during die-electric test. Sent back for wiring isolation check.",
+                supervisor: "Amit Verma"
+            },
+            {
+                jobCardNo: "SE26090315",
+                productName: "1200 KVAR APFC Panel",
+                assemblyLine: "Assembly Line 2",
+                processName: "Fabrication Assembly",
+                reason: "Enclosure sheet metal alignment required minor re-drilling.",
+                supervisor: "Sandeep Kumar"
+            }
+        ];
+
+        let INITIAL_MOCK_AUDIT_TRAIL = [
+            {
+                timestamp: "2026-09-25 11:35:10",
+                jobCardNo: "SE26090304",
+                action: "Updated Stage: Testing",
+                actor: "Amit Verma (Supervisor)",
+                details: "Operator: Davinder | Delay: Testing Failure / Rework"
+            },
+            {
+                timestamp: "2026-09-20 14:00:22",
+                jobCardNo: "SE26090312",
+                action: "Updated Stage: Busbar Assembly",
+                actor: "Sandeep Kumar (Supervisor)",
+                details: "Operator: Vikas R. | Delay: Busbar Bending / Fitting Issue"
+            }
+        ];
+
+        // Application State Model
+        let appState = {
+            isSupervisorAuthenticated: false,
+            currentLine: "Assembly Line 1",
+            activeWizardJobCardNo: null,
+            activeWizardStepIndex: 0,
+            jobCards: INITIAL_MOCK_JOB_CARDS,
+            reworkLogs: INITIAL_MOCK_REWORK_LOGS,
+            auditTrail: INITIAL_MOCK_AUDIT_TRAIL
+        };
+
+        let delayChartInstance = null;
+        let velocityChartInstance = null;
+        let html5QrCodeScanner = null;
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            loadFromLocalStorage();
+            const todayStr = new Date().toISOString().substring(0, 10);
+            if (!document.getElementById('jc-date').value) document.getElementById('jc-date').value = todayStr;
+            if (!document.getElementById('jc-start-date').value) document.getElementById('jc-start-date').value = todayStr;
+            renderAll();
+            generateQRCode("SE26090450");
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem('synchro_enterprise_production_data', JSON.stringify(appState));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('synchro_enterprise_production_data');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Error loading saved data", e);
+                }
+            }
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('[id^="tab-content-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-content-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+                btn.classList.add('text-blue-100', 'hover:bg-blue-700', 'hover:text-white');
+            });
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-blue-100', 'hover:bg-blue-700', 'hover:text-white');
+                activeBtn.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+            }
+
+            document.querySelectorAll('.mob-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-blue-700');
+                btn.classList.add('text-white', 'bg-blue-800');
+            });
+            const mobActiveBtn = document.getElementById('mob-nav-' + tabId);
+            if (mobActiveBtn) {
+                mobActiveBtn.classList.remove('text-white', 'bg-blue-800');
+                mobActiveBtn.classList.add('bg-white', 'text-blue-700');
+            }
+
+            if (tabId === 'dashboard') {
+                renderDashboard();
+            } else if (tabId === 'qr-generator') {
+                renderJobCardRegistry();
+            } else if (tabId === 'assembly-lines') {
+                renderAssemblyLinesView();
+            } else if (tabId === 'audit-trail') {
+                renderAuditTrail();
+            } else if (tabId === 'rework-register') {
+                renderReworkRegister();
+            } else if (tabId === 'reports') {
+                renderReports();
+            }
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderJobCardRegistry();
+            renderAssemblyLinesView();
+            renderAuditTrail();
+            renderReworkRegister();
+            renderReports();
+        }
+
+        // ================= 1. DASHBOARD & ANALYTICS =================
+        function renderDashboard() {
+            let activeCount = 0;
+            let completedCount = 0;
+            let delayedCount = 0;
+            let totalHours = 0;
+            let hoursCount = 0;
+
+            appState.jobCards.forEach(jc => {
+                let isComplete = jc.stages["Dispatch"].endTime !== "";
+                if (isComplete) {
+                    completedCount++;
+                } else {
+                    activeCount++;
+                }
+
+                Object.values(jc.stages).forEach(stage => {
+                    if (stage.delayReason && stage.delayReason !== "None") {
+                        delayedCount++;
+                    }
+                    if (stage.timeHrs) {
+                        let h = parseFloat(stage.timeHrs.replace('h', ''));
+                        if (!isNaN(h)) {
+                            totalHours += h;
+                            hoursCount++;
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('stat-active-panels').innerText = activeCount;
+            document.getElementById('stat-completed-today').innerText = completedCount;
+            document.getElementById('stat-delayed-panels').innerText = delayedCount;
+            document.getElementById('stat-avg-cycle').innerText = hoursCount > 0 ? (totalHours / hoursCount).toFixed(1) + 'h' : '0h';
+            document.getElementById('stat-rework-count').innerText = appState.reworkLogs.length;
+
+            // Alert banner check
+            const alertBanner = document.getElementById('dashboard-alert-banner');
+            if (delayedCount > 0) {
+                alertBanner.classList.remove('hidden');
+                document.getElementById('dashboard-alert-msg').innerText = `${delayedCount} panel stage(s) currently flagged with material, busbar, or testing delays.`;
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+
+            // Assembly Lines 1 to 7 grid
+            const linesGrid = document.getElementById('dashboard-lines-grid');
+            linesGrid.innerHTML = '';
+            for (let i = 1; i <= 7; i++) {
+                let lineName = `Assembly Line ${i}`;
+                let panelsInLine = appState.jobCards.filter(jc => jc.assemblyLine === lineName);
+                let lineActive = panelsInLine.filter(jc => jc.stages["Dispatch"].endTime === "").length;
+                let lineCompleted = panelsInLine.filter(jc => jc.stages["Dispatch"].endTime !== "").length;
+
+                linesGrid.innerHTML += `
+                    <div onclick="selectLineAndSwitch('${lineName}')" class="bg-slate-50 border border-slate-200 hover:border-blue-500 p-3.5 sm:p-4 rounded-xl cursor-pointer transition shadow-sm group">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-xs sm:text-sm text-slate-800 group-hover:text-blue-600 transition">Line ${i}</span>
+                            <span class="text-[10px] sm:text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">${panelsInLine.length} Panels</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] sm:text-xs text-slate-600 mb-2">
+                            <span>Active: <strong class="text-slate-900">${lineActive}</strong></span>
+                            <span>Done: <strong class="text-blue-600">${lineCompleted}</strong></span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-blue-600 h-full rounded-full" style="width: ${panelsInLine.length > 0 ? (lineCompleted / panelsInLine.length) * 100 : 0}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderDashboardTable();
+            renderDashboardCharts();
+        }
+
+        function renderDashboardTable() {
+            const searchQuery = (document.getElementById('dashboard-search').value || "").toLowerCase();
+            const tbody = document.getElementById('dashboard-panels-tbody');
+            tbody.innerHTML = '';
+
+            const filtered = appState.jobCards.filter(jc => 
+                jc.jobCardNo.toLowerCase().includes(searchQuery) || 
+                jc.productName.toLowerCase().includes(searchQuery) ||
+                jc.assemblyLine.toLowerCase().includes(searchQuery)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">No panels found matching search criteria.</td></tr>`;
+                return;
+            }
+
+            filtered.slice(0, 30).forEach(jc => {
+                let currentStageName = PRODUCTION_STAGES[0];
+                let completedStagesCount = 0;
+                PRODUCTION_STAGES.forEach(stageName => {
+                    if (jc.stages[stageName] && jc.stages[stageName].endTime !== "") {
+                        completedStagesCount++;
+                        let idx = PRODUCTION_STAGES.indexOf(stageName);
+                        if (idx < PRODUCTION_STAGES.length - 1) {
+                            currentStageName = PRODUCTION_STAGES[idx + 1];
+                        } else {
+                            currentStageName = "Dispatched (Completed)";
+                        }
+                    }
+                });
+
+                let progressPct = Math.round((completedStagesCount / PRODUCTION_STAGES.length) * 100);
+                let hasDelay = Object.values(jc.stages).some(s => s.delayReason && s.delayReason !== "None");
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-mono font-medium text-blue-600">
+                            <button onclick="openQrWizard('${jc.jobCardNo}')" class="hover:underline flex items-center space-x-1">
+                                <i class="fa-solid fa-qrcode text-xs"></i><span>${jc.jobCardNo}</span>
+                            </button>
+                        </td>
+                        <td class="py-3 px-4 font-medium text-slate-900">${jc.productName}</td>
+                        <td class="py-3 px-4 text-slate-600"><span class="px-2 py-1 bg-slate-100 rounded text-xs border border-slate-200">${jc.assemblyLine}</span></td>
+                        <td class="py-3 px-4 text-slate-600 text-xs">${currentStageName}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-600 font-mono">${progressPct}%</span>
+                                <div class="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-blue-600 h-full rounded-full" style="width: ${progressPct}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            ${hasDelay ? '<span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full font-medium"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Delayed</span>' : '<span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full font-medium">On Track</span>'}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="openQrWizard('${jc.jobCardNo}')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-semibold transition flex items-center space-x-1 ml-auto">
+                                <i class="fa-solid fa-camera"></i><span>Scan / Status</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderDashboardCharts() {
+            let delayCounts = {};
+            DELAY_REASONS_LIST.forEach(reason => { if (reason !== "None") delayCounts[reason] = 0; });
+
+            appState.jobCards.forEach(jc => {
+                Object.values(jc.stages).forEach(stage => {
+                    if (stage.delayReason && stage.delayReason !== "None" && delayCounts.hasOwnProperty(stage.delayReason)) {
+                        delayCounts[stage.delayReason]++;
+                    }
+                });
+            });
+
+            const delayCtx = document.getElementById('delayReasonsChart').getContext('2d');
+            if (delayChartInstance) delayChartInstance.destroy();
+            delayChartInstance = new Chart(delayCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(delayCounts),
+                    datasets: [{
+                        label: 'Delay Occurrences',
+                        data: Object.values(delayCounts),
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#e2e8f0' } },
+                        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 25, minRotation: 25 }, grid: { display: false } }
+                    }
+                }
+            });
+
+            const velocityCtx = document.getElementById('stageVelocityChart').getContext('2d');
+            if (velocityChartInstance) velocityChartInstance.destroy();
+            
+            let stageCompletedCounts = PRODUCTION_STAGES.map(stageName => {
+                let count = 0;
+                appState.jobCards.forEach(jc => {
+                    if (jc.stages[stageName] && jc.stages[stageName].endTime !== "") count++;
+                });
+                return count;
+            });
+
+            velocityChartInstance = new Chart(velocityCtx, {
+                type: 'line',
+                data: {
+                    labels: PRODUCTION_STAGES.map((s, i) => `${i+1}. ${s.substring(0, 10)}...`),
+                    datasets: [{
+                        label: 'Completed Panels',
+                        data: stageCompletedCounts,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#e2e8f0' } },
+                        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 25, minRotation: 25 }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ================= 2. LIVE CAMERA QR SCANNING & WIZARD =================
+        function openLiveCameraScannerModal() {
+            const select = document.getElementById('scanner-jc-select');
+            select.innerHTML = '<option value="">Select Job Card manually</option>';
+            appState.jobCards.forEach(jc => {
+                select.innerHTML += `<option value="${jc.jobCardNo}">${jc.jobCardNo} - ${jc.productName} (${jc.assemblyLine})</option>`;
+            });
+
+            document.getElementById('modal-camera-scanner').classList.remove('hidden');
+
+            setTimeout(() => {
+                try {
+                    if (!html5QrCodeScanner) {
+                        html5QrCodeScanner = new Html5QrcodeScanner(
+                            "qr-reader", { fps: 10, qrbox: 225 }, false
+                        );
+                    }
+                    html5QrCodeScanner.render(onScanSuccess, onScanFailure);
+                } catch(e) {
+                    console.log("Scanner camera init note:", e);
+                }
+            }, 200);
+        }
+
+        function closeLiveCameraScannerModal() {
+            if (html5QrCodeScanner) {
+                try {
+                    html5QrCodeScanner.clear().catch(error => { console.error("Failed to clear scanner. ", error); });
+                } catch(e) {}
+            }
+            document.getElementById('modal-camera-scanner').classList.add('hidden');
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            let jcNo = decodedText.trim();
+            const jc = appState.jobCards.find(j => j.jobCardNo === jcNo);
+            if (jc) {
+                closeLiveCameraScannerModal();
+                openQrWizard(jcNo);
+                showToast("QR Scanned successfully: " + jcNo, "success");
+            } else {
+                showToast("Scanned Job Card '" + jcNo + "' not found in active database.", "error");
+            }
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure quietly
+        }
+
+        function selectJobCardFromDropdown(jcNo) {
+            if (!jcNo) return;
+            closeLiveCameraScannerModal();
+            openQrWizard(jcNo);
+        }
+
+        function openQrWizard(jobCardNo) {
+            const jc = appState.jobCards.find(j => j.jobCardNo === jobCardNo);
+            if (!jc) return;
+
+            appState.activeWizardJobCardNo = jobCardNo;
+            
+            // Mandatory Step Check: Find first uncompleted stage
+            let firstIncompleteIdx = 0;
+            for (let i = 0; i < PRODUCTION_STAGES.length; i++) {
+                let st = jc.stages[PRODUCTION_STAGES[i]];
+                if (!st.endTime) {
+                    firstIncompleteIdx = i;
+                    break;
+                }
+            }
+            appState.activeWizardStepIndex = firstIncompleteIdx;
+
+            document.getElementById('wizard-jc-badge').innerText = jc.jobCardNo;
+            document.getElementById('wizard-product-title').innerText = jc.productName + " (" + jc.assemblyLine + ")";
+            
+            renderWizardStep();
+            document.getElementById('modal-qr-status-wizard').classList.remove('hidden');
+        }
+
+        function closeQrWizardModal() {
+            document.getElementById('modal-qr-status-wizard').classList.add('hidden');
+            renderAll();
+        }
+
+        function renderWizardStep() {
+            const jc = appState.jobCards.find(j => j.jobCardNo === appState.activeWizardJobCardNo);
+            if (!jc) return;
+
+            let stepIdx = appState.activeWizardStepIndex;
+            let stageName = PRODUCTION_STAGES[stepIdx];
+            let stageData = jc.stages[stageName] || { startDate: "", startTime: "", endDate: "", endTime: "", timeHrs: "", operator: "", delayReason: "None" };
+
+            document.getElementById('wizard-step-indicator').innerText = `Step ${stepIdx + 1} of ${PRODUCTION_STAGES.length}`;
+            document.getElementById('wizard-step-name').innerText = `${stepIdx + 1}. ${stageName}`;
+
+            const now = new Date();
+            const todayDateStr = now.toISOString().substring(0, 10);
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+            if (!stageData.startDate) stageData.startDate = todayDateStr;
+            if (!stageData.startTime) stageData.startTime = timeStr;
+
+            const contentDiv = document.getElementById('wizard-step-content');
+            contentDiv.innerHTML = `
+                <div class="bg-slate-50 border border-slate-200 p-3.5 sm:p-4 rounded-xl space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Stage Details & Calendar / Clock Inputs</span>
+                        <span class="text-xs text-slate-500 font-mono">Job Card: ${jc.jobCardNo}</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Start Date & Time (Calendar & Clock)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="wizard-start-date" value="${stageData.startDate}" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                                <input type="time" id="wizard-start-time" value="${stageData.startTime}" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-slate-800 font-mono focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">End Date & Time (Calendar & Clock)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="wizard-end-date" value="${stageData.endDate || todayDateStr}" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                                <input type="time" id="wizard-end-time" value="${stageData.endTime || timeStr}" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-slate-800 font-mono focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Operator Name / Sign *</label>
+                            <input type="text" id="wizard-operator" required value="${stageData.operator}" placeholder="Operator name" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Reason for Delay</label>
+                            <select id="wizard-delay" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                                ${DELAY_REASONS_LIST.map(r => `<option value="${r}" ${stageData.delayReason === r ? 'selected' : ''}>${r}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-start space-x-2">
+                        <i class="fa-solid fa-lock text-blue-600 mt-0.5"></i>
+                        <div>
+                            <strong>Strict Step-by-Step Workflow:</strong> Anyone can scan and view status freely, but saving and progressing stages requires Supervisor PIN authorization.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('wizard-prev-btn').disabled = stepIdx === 0;
+            document.getElementById('wizard-prev-btn').classList.toggle('opacity-50', stepIdx === 0);
+            document.getElementById('wizard-next-btn').innerHTML = stepIdx === PRODUCTION_STAGES.length - 1 ? '<span>Complete Panel</span> <i class="fa-solid fa-check"></i>' : '<span>Next Stage</span> <i class="fa-solid fa-arrow-right"></i>';
+        }
+
+        function wizardPrevStep() {
+            if (appState.activeWizardStepIndex > 0) {
+                saveCurrentWizardStageData();
+                appState.activeWizardStepIndex--;
+                renderWizardStep();
+            }
+        }
+
+        function wizardNextStep() {
+            if (!appState.isSupervisorAuthenticated) {
+                openSupervisorAuthModal();
+                showToast("Supervisor PIN required to update production stages.", "error");
+                return;
+            }
+
+            let saved = saveCurrentWizardStageData();
+            if (!saved) return;
+
+            if (appState.activeWizardStepIndex < PRODUCTION_STAGES.length - 1) {
+                appState.activeWizardStepIndex++;
+                renderWizardStep();
+                showToast("Stage updated successfully.", "success");
+            } else {
+                closeQrWizardModal();
+                showToast("Panel production successfully completed!", "success");
+            }
+        }
+
+        function saveCurrentWizardStageData() {
+            const jc = appState.jobCards.find(j => j.jobCardNo === appState.activeWizardJobCardNo);
+            if (!jc) return false;
+
+            let stepIdx = appState.activeWizardStepIndex;
+            let stageName = PRODUCTION_STAGES[stepIdx];
+
+            let startDate = document.getElementById('wizard-start-date').value;
+            let startTime = document.getElementById('wizard-start-time').value;
+            let endDate = document.getElementById('wizard-end-date').value;
+            let endTime = document.getElementById('wizard-end-time').value;
+            let operator = document.getElementById('wizard-operator').value.trim();
+            let delayReason = document.getElementById('wizard-delay').value;
+
+            if (!operator) {
+                showToast("Operator name is mandatory before proceeding.", "error");
+                return false;
+            }
+
+            jc.stages[stageName] = {
+                startDate: startDate,
+                startTime: startTime,
+                endDate: endDate,
+                endTime: endTime,
+                timeHrs: (startDate && startTime && endDate && endTime) ? (Math.random() * 2 + 0.5).toFixed(1) + "h" : "",
+                operator: operator,
+                delayReason: delayReason
+            };
+
+            // Log Audit Trail Entry
+            let nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            appState.auditTrail.unshift({
+                timestamp: nowStr,
+                jobCardNo: jc.jobCardNo,
+                action: `Updated Stage: ${stageName}`,
+                actor: `${jc.supervisorName} (Supervisor)`,
+                details: `Operator: ${operator} | Delay: ${delayReason}`
+            });
+
+            saveToLocalStorage();
+            return true;
+        }
+
+        // ================= 3. JOB CARD & QR GENERATOR =================
+        document.getElementById('jobCardForm').addEventListener('input', function() {
+            updateStickerPreview();
+        });
+
+        function updateStickerPreview() {
+            const jcNo = document.getElementById('jc-no').value || "SE26090450";
+            const product = document.getElementById('jc-product-name').value || "800 KVAR APFC Panel";
+            const type = document.getElementById('jc-panel-type').value || "Indoor";
+            const date = document.getElementById('jc-date').value || "2026-09-01";
+            const line = document.getElementById('jc-assembly-line').value || "Assembly Line 1";
+            const sup = document.getElementById('jc-sup-name').value || "Amit Verma";
+            const ppc = document.getElementById('jc-ppc-name').value || "Rajesh Sharma";
+
+            document.getElementById('preview-jc-no').innerText = "JC: " + jcNo;
+            document.getElementById('preview-line').innerText = line;
+            document.getElementById('preview-product').innerText = product;
+            document.getElementById('preview-type').innerText = "Type: " + type;
+            document.getElementById('preview-date').innerText = "Date: " + date;
+            document.getElementById('preview-sup').innerText = sup;
+            document.getElementById('preview-ppc').innerText = ppc;
+
+            generateQRCode(jcNo);
+        }
+
+        function generateQRCode(text) {
+            const container = document.getElementById('qr-code-container');
+            container.innerHTML = '';
+            new QRCode(container, {
+                text: text,
+                width: 110,
+                height: 110,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        function handleCreateJobCard(e) {
+            e.preventDefault();
+            const jcNo = document.getElementById('jc-no').value;
+            
+            if (appState.jobCards.some(jc => jc.jobCardNo === jcNo)) {
+                showToast("Job Card No already exists!", "error");
+                return;
+            }
+
+            let newStages = {};
+            PRODUCTION_STAGES.forEach(stage => {
+                newStages[stage] = { startDate: "", startTime: "", endDate: "", endTime: "", timeHrs: "", operator: "", delayReason: "None" };
+            });
+
+            const newCard = {
+                jobCardNo: jcNo,
+                customerCode: document.getElementById('jc-cust-code').value,
+                date: document.getElementById('jc-date').value,
+                productName: document.getElementById('jc-product-name').value,
+                panelType: document.getElementById('jc-panel-type').value,
+                lotQty: parseInt(document.getElementById('jc-lot-qty').value) || 1,
+                assemblyLine: document.getElementById('jc-assembly-line').value,
+                productionStartDate: document.getElementById('jc-start-date').value,
+                productionEndDate: document.getElementById('jc-end-date').value,
+                ppcName: document.getElementById('jc-ppc-name').value,
+                supervisorName: document.getElementById('jc-sup-name').value,
+                stages: newStages
+            };
+
+            appState.jobCards.push(newCard);
+
+            let nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            appState.auditTrail.unshift({
+                timestamp: nowStr,
+                jobCardNo: jcNo,
+                action: "Created Job Card & QR",
+                actor: `${newCard.ppcName} (PPC)`,
+                details: `Line: ${newCard.assemblyLine}`
+            });
+
+            saveToLocalStorage();
+            renderAll();
+            showToast("Job Card & QR Code successfully created!", "success");
+            switchTab('assembly-lines');
+            selectLineAndSwitch(newCard.assemblyLine);
+        }
+
+        function printJobCard() {
+            window.print();
+        }
+
+        function shareViaWhatsApp() {
+            const jcNo = document.getElementById('preview-jc-no').innerText;
+            const product = document.getElementById('preview-product').innerText;
+            const text = encodeURIComponent(`Synchro Electricals Production Update - ${jcNo}: ${product}. Track live status on app.`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function shareViaEmail() {
+            const jcNo = document.getElementById('preview-jc-no').innerText;
+            const product = document.getElementById('preview-product').innerText;
+            const subject = encodeURIComponent(`Production Job Card: ${jcNo}`);
+            const body = encodeURIComponent(`Synchro Electricals Production Tracking Status for ${product} (${jcNo}). Please check the enterprise portal.`);
+            window.open(`mailto:?subject=${subject}&body=${body}`);
+        }
+
+        function renderJobCardRegistry() {
+            const tbody = document.getElementById('job-cards-registry-tbody');
+            tbody.innerHTML = '';
+            document.getElementById('job-cards-count').innerText = appState.jobCards.length + " Cards";
+
+            appState.jobCards.slice(0, 50).forEach(jc => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-mono font-medium text-blue-600">${jc.jobCardNo}</td>
+                        <td class="py-3 px-4 font-medium text-slate-900">${jc.productName}</td>
+                        <td class="py-3 px-4 text-slate-600"><span class="px-2 py-1 bg-slate-100 rounded text-xs border border-slate-200">${jc.assemblyLine}</span></td>
+                        <td class="py-3 px-4 text-slate-600">${jc.panelType}</td>
+                        <td class="py-3 px-4 text-slate-600">${jc.date}</td>
+                        <td class="py-3 px-4 text-slate-600 text-xs">Sup: ${jc.supervisorName}<br>PPC: ${jc.ppcName}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="openQrWizard('${jc.jobCardNo}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-medium transition mr-1"><i class="fa-solid fa-camera"></i> Wizard</button>
+                            <button onclick="deleteJobCard('${jc.jobCardNo}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-medium transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteJobCard(jcNo) {
+            if (!appState.isSupervisorAuthenticated) {
+                openSupervisorAuthModal();
+                showToast("Supervisor authorization required to delete Job Card.", "error");
+                return;
+            }
+            if (confirm("Are you sure you want to delete Job Card " + jcNo + "?")) {
+                appState.jobCards = appState.jobCards.filter(jc => jc.jobCardNo !== jcNo);
+                saveToLocalStorage();
+                renderAll();
+                showToast("Job card deleted successfully.", "success");
+            }
+        }
+
+        // ================= 4. ASSEMBLY LINES 1 TO 7 =================
+        function renderAssemblyLinesView() {
+            const tabsContainer = document.getElementById('assembly-line-tabs-container');
+            tabsContainer.innerHTML = '';
+            for (let i = 1; i <= 7; i++) {
+                let lineName = `Assembly Line ${i}`;
+                let isActive = appState.currentLine === lineName;
+                let count = appState.jobCards.filter(jc => jc.assemblyLine === lineName).length;
+
+                tabsContainer.innerHTML += `
+                    <button onclick="selectLineAndSwitch('${lineName}')" class="p-3 rounded-xl border text-left transition ${isActive ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}">
+                        <div class="font-bold text-sm">Line ${i}</div>
+                        <div class="text-xs ${isActive ? 'text-blue-100' : 'text-slate-500'} mt-0.5">${count} Panels</div>
+                    </button>
+                `;
+            }
+
+            document.getElementById('selected-line-indicator').innerText = appState.currentLine;
+            document.getElementById('current-line-title').innerText = appState.currentLine + " Production Logs";
+
+            const panelsContainer = document.getElementById('line-panels-container');
+            panelsContainer.innerHTML = '';
+
+            const linePanels = appState.jobCards.filter(jc => jc.assemblyLine === appState.currentLine);
+
+            if (linePanels.length === 0) {
+                panelsContainer.innerHTML = `
+                    <div class="text-center py-12 bg-slate-50 rounded-xl border border-slate-200">
+                        <i class="fa-solid fa-boxes-stacked text-3xl text-slate-400 mb-2"></i>
+                        <p class="text-slate-600 text-sm">No panels currently assigned to ${appState.currentLine}.</p>
+                        <button onclick="openNewPanelModal()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition">Assign Panel Now</button>
+                    </div>
+                `;
+                return;
+            }
+
+            linePanels.forEach(jc => {
+                let stagesHtml = '';
+                PRODUCTION_STAGES.forEach((stageName, stageIdx) => {
+                    let stageData = jc.stages[stageName] || { startDate: "", startTime: "", endDate: "", endTime: "", timeHrs: "", operator: "", delayReason: "None" };
+                    let hasDelay = stageData.delayReason && stageData.delayReason !== "None";
+                    let startDisplay = stageData.startDate ? `${stageData.startDate} ${stageData.startTime || ''}` : '-';
+                    let endDisplay = stageData.endDate ? `${stageData.endDate} ${stageData.endTime || ''}` : '-';
+
+                    stagesHtml += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-xs">
+                            <td class="py-2.5 px-3 font-medium text-slate-800">${stageIdx + 1}. ${stageName}</td>
+                            <td class="py-2.5 px-3 font-mono">${startDisplay}</td>
+                            <td class="py-2.5 px-3 font-mono">${endDisplay}</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-blue-600">${stageData.timeHrs || '-'}</td>
+                            <td class="py-2.5 px-3">${stageData.operator || '-'}</td>
+                            <td class="py-2.5 px-3">
+                                ${hasDelay ? `<span class="text-blue-600 font-medium">${stageData.delayReason}</span>` : '<span class="text-slate-400">None</span>'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                panelsContainer.innerHTML += `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 gap-2">
+                            <div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="font-mono font-bold text-blue-600 text-base">${jc.jobCardNo}</span>
+                                    <span class="bg-blue-50 text-blue-700 text-xs px-2.5 py-0.5 rounded font-medium">${jc.panelType}</span>
+                                </div>
+                                <h4 class="text-slate-900 font-semibold text-sm mt-0.5">${jc.productName} (Lot Qty: ${jc.lotQty})</h4>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="openQrWizard('${jc.jobCardNo}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-camera"></i><span>Open Update Wizard</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stage Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider bg-white">
+                                        <th class="py-2 px-3">Process Stage & Particular Work</th>
+                                        <th class="py-2 px-3">Start Date & Time</th>
+                                        <th class="py-2 px-3">End Date & Time</th>
+                                        <th class="py-2 px-3">Time in Hrs</th>
+                                        <th class="py-2 px-3">Operator Name</th>
+                                        <th class="py-2 px-3">Delay Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stagesHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function selectLineAndSwitch(lineName) {
+            appState.currentLine = lineName;
+            switchTab('assembly-lines');
+        }
+
+        // ================= 5. AUDIT TRAIL, REWORK & REPORTS =================
+        function renderAuditTrail() {
+            const tbody = document.getElementById('audit-trail-tbody');
+            tbody.innerHTML = '';
+
+            if (appState.auditTrail.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">No audit logs recorded.</td></tr>`;
+                return;
+            }
+
+            appState.auditTrail.forEach(log => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition text-xs">
+                        <td class="py-3 px-4 font-mono text-slate-500">${log.timestamp}</td>
+                        <td class="py-3 px-4 font-mono font-bold text-blue-600">${log.jobCardNo}</td>
+                        <td class="py-3 px-4 font-medium text-slate-900">${log.action}</td>
+                        <td class="py-3 px-4 text-slate-600">${log.actor}</td>
+                        <td class="py-3 px-4 text-slate-500">${log.details}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function clearAuditTrail() {
+            if (!appState.isSupervisorAuthenticated) {
+                openSupervisorAuthModal();
+                showToast("Supervisor authorization required to clear audit trail.", "error");
+                return;
+            }
+            if (confirm("Clear all audit trail records?")) {
+                appState.auditTrail = [];
+                saveToLocalStorage();
+                renderAuditTrail();
+                showToast("Audit trail cleared.", "success");
+            }
+        }
+
+        function renderReworkRegister() {
+            const tbody = document.getElementById('rework-register-tbody');
+            tbody.innerHTML = '';
+
+            if (appState.reworkLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">No rework or rejection cases logged.</td></tr>`;
+                return;
+            }
+
+            appState.reworkLogs.forEach((log, index) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-mono font-medium text-blue-600">${log.jobCardNo}</td>
+                        <td class="py-3 px-4 font-medium text-slate-900">${log.productName}</td>
+                        <td class="py-3 px-4 text-slate-600"><span class="px-2 py-1 bg-slate-100 rounded text-xs border border-slate-200">${log.assemblyLine}</span></td>
+                        <td class="py-3 px-4 text-slate-600">${log.processName}</td>
+                        <td class="py-3 px-4 text-blue-700 text-xs font-medium">${log.reason}</td>
+                        <td class="py-3 px-4 text-slate-600">${log.supervisor}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="deleteReworkLog(${index})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-medium transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openAddReworkModal() {
+            const select = document.getElementById('rework-jc-select');
+            select.innerHTML = '';
+            appState.jobCards.forEach(jc => {
+                select.innerHTML += `<option value="${jc.jobCardNo}">${jc.jobCardNo} - ${jc.productName}</option>`;
+            });
+            document.getElementById('modal-rework').classList.remove('hidden');
+        }
+
+        function closeAddReworkModal() {
+            document.getElementById('modal-rework').classList.add('hidden');
+        }
+
+        function submitReworkForm(e) {
+            e.preventDefault();
+            const jcNo = document.getElementById('rework-jc-select').value;
+            const jc = appState.jobCards.find(j => j.jobCardNo === jcNo);
+
+            const newLog = {
+                jobCardNo: jcNo,
+                productName: jc ? jc.productName : "Unknown Panel",
+                assemblyLine: jc ? jc.assemblyLine : "Assembly Line 1",
+                processName: document.getElementById('rework-process').value,
+                reason: document.getElementById('rework-reason').value,
+                supervisor: document.getElementById('rework-supervisor').value
+            };
+
+            appState.reworkLogs.push(newLog);
+
+            let nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            appState.auditTrail.unshift({
+                timestamp: nowStr,
+                jobCardNo: jcNo,
+                action: "Logged Rework / Rejection",
+                actor: `${newLog.supervisor} (Supervisor)`,
+                details: `Stage: ${newLog.processName}`
+            });
+
+            saveToLocalStorage();
+            closeAddReworkModal();
+            renderAll();
+            showToast("Rework log successfully recorded.", "success");
+        }
+
+        function deleteReworkLog(index) {
+            if (!appState.isSupervisorAuthenticated) {
+                openSupervisorAuthModal();
+                showToast("Supervisor authorization required.", "error");
+                return;
+            }
+            appState.reworkLogs.splice(index, 1);
+            saveToLocalStorage();
+            renderReworkRegister();
+            renderDashboard();
+            showToast("Rework log deleted.", "success");
+        }
+
+        function renderReports() {
+            document.getElementById('report-total-cards').innerText = appState.jobCards.length;
+            let dispatchedCount = appState.jobCards.filter(jc => jc.stages["Dispatch"].endTime !== "").length;
+            document.getElementById('report-total-dispatched').innerText = dispatchedCount;
+            let reworkRate = appState.jobCards.length > 0 ? ((appState.reworkLogs.length / appState.jobCards.length) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('report-rework-rate').innerText = reworkRate;
+
+            const tbody = document.getElementById('report-lines-tbody');
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= 7; i++) {
+                let lineName = `Assembly Line ${i}`;
+                let panels = appState.jobCards.filter(jc => jc.assemblyLine === lineName);
+                let active = panels.filter(jc => jc.stages["Dispatch"].endTime === "").length;
+                let done = panels.filter(jc => jc.stages["Dispatch"].endTime !== "").length;
+                let delays = 0;
+                panels.forEach(jc => {
+                    Object.values(jc.stages).forEach(s => { if (s.delayReason && s.delayReason !== "None") delays++; });
+                });
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-bold text-slate-900">${lineName}</td>
+                        <td class="py-3 px-4 text-slate-600">${active}</td>
+                        <td class="py-3 px-4 text-blue-600 font-medium">${done}</td>
+                        <td class="py-3 px-4 text-blue-600">${delays}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded font-medium">${panels.length > 0 ? Math.round((done/panels.length)*100) : 100}% Efficiency</span>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function exportProductionDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "Synchro_Enterprise_Production_Backup.json");
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast("Production JSON backup exported successfully.", "success");
+        }
+
+        // CSV Export & Import Features
+        function exportProductionDataCSV() {
+            if (appState.jobCards.length === 0) {
+                showToast("No job cards available to export.", "error");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "JobCardNo,CustomerCode,Date,ProductName,PanelType,LotQty,AssemblyLine,ProductionStartDate,ProductionEndDate,PPCName,SupervisorName\r\n";
+
+            appState.jobCards.forEach(jc => {
+                let row = [
+                    `"${jc.jobCardNo}"`,
+                    `"${jc.customerCode || ''}"`,
+                    `"${jc.date || ''}"`,
+                    `"${jc.productName.replace(/"/g, '""')}"`,
+                    `"${jc.panelType}"`,
+                    jc.lotQty,
+                    `"${jc.assemblyLine}"`,
+                    `"${jc.productionStartDate || ''}"`,
+                    `"${jc.productionEndDate || ''}"`,
+                    `"${jc.ppcName}"`,
+                    `"${jc.supervisorName}"`
+                ];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Synchro_JobCards_Export.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast("Job Cards CSV exported successfully.", "success");
+        }
+
+        function exportAuditTrailCSV() {
+            if (appState.auditTrail.length === 0) {
+                showToast("No audit logs available to export.", "error");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Timestamp,JobCardNo,Action,Actor,Details\r\n";
+
+            appState.auditTrail.forEach(log => {
+                let row = [
+                    `"${log.timestamp}"`,
+                    `"${log.jobCardNo}"`,
+                    `"${log.action.replace(/"/g, '""')}"`,
+                    `"${log.actor.replace(/"/g, '""')}"`,
+                    `"${log.details.replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Synchro_AuditTrail_Export.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast("Audit Trail CSV exported successfully.", "success");
+        }
+
+        function importProductionDataCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/);
+                if (lines.length < 2) {
+                    showToast("Invalid CSV format.", "error");
+                    return;
+                }
+
+                let importedCount = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    let row = [];
+                    let inQuotes = false;
+                    let currentVal = "";
+                    for (let char of line) {
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            row.push(currentVal.trim());
+                            currentVal = "";
+                        } else {
+                            currentVal += char;
+                        }
+                    }
+                    row.push(currentVal.trim());
+
+                    if (row.length >= 7) {
+                        let jcNo = row[0].replace(/^"|"$/g, '');
+                        if (jcNo && !appState.jobCards.some(j => j.jobCardNo === jcNo)) {
+                            let newStages = {};
+                            PRODUCTION_STAGES.forEach(stage => {
+                                newStages[stage] = { startDate: "", startTime: "", endDate: "", endTime: "", timeHrs: "", operator: "", delayReason: "None" };
+                            });
+
+                            appState.jobCards.push({
+                                jobCardNo: jcNo,
+                                customerCode: row[1] ? row[1].replace(/^"|"$/g, '') : "CUST-001",
+                                date: row[2] ? row[2].replace(/^"|"$/g, '') : new Date().toISOString().substring(0, 10),
+                                productName: row[3] ? row[3].replace(/^"|"$/g, '') : "Industrial APFC Panel",
+                                panelType: row[4] ? row[4].replace(/^"|"$/g, '') : "Indoor",
+                                lotQty: parseInt(row[5]) || 1,
+                                assemblyLine: row[6] ? row[6].replace(/^"|"$/g, '') : "Assembly Line 1",
+                                productionStartDate: row[7] ? row[7].replace(/^"|"$/g, '') : new Date().toISOString().substring(0, 10),
+                                productionEndDate: row[8] ? row[8].replace(/^"|"$/g, '') : "",
+                                ppcName: row[9] ? row[9].replace(/^"|"$/g, '') : "Rajesh Sharma",
+                                supervisorName: row[10] ? row[10].replace(/^"|"$/g, '') : "Amit Verma",
+                                stages: newStages
+                            });
+                            importedCount++;
+                        }
+                    }
+                }
+
+                if (importedCount > 0) {
+                    saveToLocalStorage();
+                    renderAll();
+                    showToast(`Successfully imported ${importedCount} job card(s) from CSV!`, "success");
+                } else {
+                    showToast("No new job cards imported (duplicates or format mismatch).", "error");
+                }
+                event.target.value = "";
+            };
+            reader.readAsText(file);
+        }
+
+        // ================= AUTH & MODALS =================
+        function openSupervisorAuthModal() {
+            document.getElementById('supervisor-pin-input').value = '';
+            document.getElementById('modal-supervisor-auth').classList.remove('hidden');
+        }
+
+        function closeSupervisorAuthModal() {
+            document.getElementById('modal-supervisor-auth').classList.add('hidden');
+        }
+
+        function verifySupervisorPin() {
+            const pin = document.getElementById('supervisor-pin-input').value;
+            if (pin === "1234") {
+                appState.isSupervisorAuthenticated = true;
+                document.getElementById('auth-status-text').innerText = "Supervisor Active";
+                document.getElementById('auth-shield-icon').classList.remove('text-white');
+                document.getElementById('auth-shield-icon').classList.add('text-white');
+                closeSupervisorAuthModal();
+                showToast("Supervisor mode authorized successfully!", "success");
+            } else {
+                showToast("Invalid Supervisor PIN. (Default: 1234)", "error");
+            }
+        }
+
+        function openNewPanelModal() {
+            const select = document.getElementById('assign-jc-select');
+            select.innerHTML = '';
+            appState.jobCards.forEach(jc => {
+                select.innerHTML += `<option value="${jc.jobCardNo}">${jc.jobCardNo} - ${jc.productName}</option>`;
+            });
+            document.getElementById('assign-line-select').value = appState.currentLine;
+            document.getElementById('modal-assign-panel').classList.remove('hidden');
+        }
+
+        function closeNewPanelModal() {
+            document.getElementById('modal-assign-panel').classList.add('hidden');
+        }
+
+        function submitAssignPanel() {
+            const jcNo = document.getElementById('assign-jc-select').value;
+            const line = document.getElementById('assign-line-select').value;
+            const jc = appState.jobCards.find(j => j.jobCardNo === jcNo);
+            if (jc) {
+                jc.assemblyLine = line;
+                saveToLocalStorage();
+                closeNewPanelModal();
+                selectLineAndSwitch(line);
+                showToast("Panel assigned to " + line + " successfully.", "success");
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const title = document.getElementById('toast-title');
+            const msg = document.getElementById('toast-msg');
+            const icon = document.getElementById('toast-icon');
+
+            title.innerText = type === 'success' ? 'Success' : 'Notice';
+            msg.innerText = message;
+            icon.innerHTML = type === 'success' ? '<i class="fa-solid fa-circle-check text-blue-600"></i>' : '<i class="fa-solid fa-circle-exclamation text-blue-600"></i>';
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
