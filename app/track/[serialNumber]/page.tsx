@@ -8,6 +8,15 @@ import { useAuth } from '@/components/AuthContext';
 import { FastStageWizardModal } from '@/components/FastStageWizardModal';
 import { LoginModal } from '@/components/LoginModal';
 import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+import {
   Zap,
   CheckCircle2,
   Clock,
@@ -21,8 +30,13 @@ import {
   BarChart2,
   Lock,
   Layers,
-  ArrowLeft
+  ArrowLeft,
+  Share2,
+  Send,
+  Check
 } from 'lucide-react';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function TrackPanelPage({
   params,
@@ -38,6 +52,7 @@ export default function TrackPanelPage({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [liveElapsed, setLiveElapsed] = useState<string>('00:00:00');
+  const [graphViewMode, setGraphViewMode] = useState<'bars' | 'chart'>('chart');
 
   // Modals
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
@@ -106,6 +121,15 @@ export default function TrackPanelPage({
     setIsWizardOpen(true);
   };
 
+  const handleShareWhatsApp = () => {
+    if (!jobCard) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const text = encodeURIComponent(
+      `*Synchro Electricals Live Tracking - ${jobCard.job_card_no}*\nProduct: ${jobCard.product_name}\nLine: ${jobCard.assemblyLine}\nCurrent Stage: ${jobCard.current_stage}\nTrack: ${origin}/track/${jobCard.job_card_no}`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -141,6 +165,52 @@ export default function TrackPanelPage({
   const completedStagesCount = stages.filter((s) => s.status === 'completed').length;
   const progressPct = Math.round((completedStagesCount / PRODUCTION_STAGES.length) * 100);
 
+  // Chart Data: Actual vs Target Duration per stage
+  const chartLabels = PRODUCTION_STAGES.map((s, i) => `${i + 1}. ${s.name}`);
+  const targetDurations = PRODUCTION_STAGES.map((s) => s.standardDurationHrs);
+  const actualDurations = stages.map((st) => Number(st.duration_hours || (st.status === 'completed' ? 1.5 : 0)));
+
+  const chartData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: 'Actual Hours Taken',
+        data: actualDurations,
+        backgroundColor: '#2563eb',
+        borderRadius: 4,
+      },
+      {
+        label: 'Standard Target (Hrs)',
+        data: targetDurations,
+        backgroundColor: '#cbd5e1',
+        borderRadius: 4,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    indexAxis: 'y' as const,
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: { font: { size: 10 } },
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { font: { size: 10 }, stepSize: 1 },
+        grid: { color: '#f1f5f9' },
+      },
+      y: {
+        ticks: { font: { size: 9 } },
+        grid: { display: false },
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col antialiased text-slate-800">
       {/* Top Header */}
@@ -157,6 +227,13 @@ export default function TrackPanelPage({
           </Link>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={handleShareWhatsApp}
+              className="p-1.5 bg-blue-700 hover:bg-blue-800 rounded-lg text-white transition"
+              title="Share on WhatsApp"
+            >
+              <Send className="w-4 h-4" />
+            </button>
             <button
               onClick={handleUpdateClick}
               className="bg-white hover:bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded-xl text-xs shadow-md transition flex items-center space-x-1.5"
@@ -218,13 +295,13 @@ export default function TrackPanelPage({
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block">
-                Current Production Stage
+                Current Workstation Stage
               </span>
               <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">
                 {jobCard.current_stage}
               </h3>
               <p className="text-xs text-slate-600 mt-0.5">
-                Stage {jobCard.current_stage_idx + 1} of {PRODUCTION_STAGES.length}
+                Step {jobCard.current_stage_idx + 1} of {PRODUCTION_STAGES.length}
               </p>
             </div>
 
@@ -269,64 +346,95 @@ export default function TrackPanelPage({
 
         {/* Total Process Time Graph (How much time each process took) */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-slate-200">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-              <BarChart2 className="w-5 h-5" />
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                <BarChart2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900 leading-tight">
+                  Total Process Graph (Time Consumed Per Stage)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Visual graph of actual hours logged vs target hours for each manufacturing step
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-base text-slate-900 leading-tight">
-                Process Time Distribution Graph
-              </h3>
-              <p className="text-xs text-slate-500">
-                Shows exact time consumed by each manufacturing stage
-              </p>
+
+            {/* Toggle view mode */}
+            <div className="flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setGraphViewMode('chart')}
+                className={`px-3 py-1 rounded-lg transition ${
+                  graphViewMode === 'chart' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'
+                }`}
+              >
+                Chart
+              </button>
+              <button
+                type="button"
+                onClick={() => setGraphViewMode('bars')}
+                className={`px-3 py-1 rounded-lg transition ${
+                  graphViewMode === 'bars' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'
+                }`}
+              >
+                List Bars
+              </button>
             </div>
           </div>
 
-          {/* Visual Bar Breakdown */}
-          <div className="space-y-2.5 pt-1">
-            {stages.map((st, idx) => {
-              const hrs = st.duration_hours || (st.status === 'completed' ? 1.5 : 0);
-              const maxHrs = 6.0;
-              const barPct = Math.min(100, Math.max(5, (hrs / maxHrs) * 100));
-              const isCurrent = st.stage_index === jobCard.current_stage_idx;
+          {/* View Mode 1: Interactive Chart.js Horizontal Bar Chart */}
+          {graphViewMode === 'chart' ? (
+            <div className="relative w-full h-80 sm:h-96">
+              <Bar data={chartData} options={chartOptions} />
+            </div>
+          ) : (
+            /* View Mode 2: Detailed Progress List Bars */
+            <div className="space-y-2.5 pt-1">
+              {stages.map((st, idx) => {
+                const hrs = st.duration_hours || (st.status === 'completed' ? 1.5 : 0);
+                const maxHrs = 6.0;
+                const barPct = Math.min(100, Math.max(5, (hrs / maxHrs) * 100));
+                const isCurrent = st.stage_index === jobCard.current_stage_idx;
 
-              return (
-                <div key={st.id} className="space-y-1">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-medium text-slate-800 flex items-center space-x-1.5">
-                      <span className="font-mono text-slate-400 text-[11px]">{idx + 1}.</span>
-                      <span className={isCurrent ? 'font-bold text-blue-600' : ''}>{st.stage_name}</span>
-                      {st.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                      {st.status === 'in_progress' && <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
-                    </span>
-                    <span className="font-mono font-bold text-slate-700">
-                      {st.status === 'completed' ? (
-                        st.duration_display || `${hrs.toFixed(1)}h`
-                      ) : st.status === 'in_progress' ? (
-                        <span className="text-amber-600">Active ({liveElapsed})</span>
-                      ) : (
-                        <span className="text-slate-400 font-normal">Pending</span>
-                      )}
-                    </span>
-                  </div>
+                return (
+                  <div key={st.id} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-medium text-slate-800 flex items-center space-x-1.5">
+                        <span className="font-mono text-slate-400 text-[11px]">{idx + 1}.</span>
+                        <span className={isCurrent ? 'font-bold text-blue-600' : ''}>{st.stage_name}</span>
+                        {st.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                        {st.status === 'in_progress' && <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
+                      </span>
+                      <span className="font-mono font-bold text-slate-700">
+                        {st.status === 'completed' ? (
+                          st.duration_display || `${hrs.toFixed(1)}h`
+                        ) : st.status === 'in_progress' ? (
+                          <span className="text-amber-600">Active ({liveElapsed})</span>
+                        ) : (
+                          <span className="text-slate-400 font-normal">Pending</span>
+                        )}
+                      </span>
+                    </div>
 
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        st.status === 'completed'
-                          ? 'bg-blue-600'
-                          : st.status === 'in_progress'
-                          ? 'bg-amber-500 animate-pulse'
-                          : 'bg-transparent'
-                      }`}
-                      style={{ width: st.status === 'pending' ? '0%' : `${barPct}%` }}
-                    ></div>
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          st.status === 'completed'
+                            ? 'bg-blue-600'
+                            : st.status === 'in_progress'
+                            ? 'bg-amber-500 animate-pulse'
+                            : 'bg-transparent'
+                        }`}
+                        style={{ width: st.status === 'pending' ? '0%' : `${barPct}%` }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* 11 Stages Timeline & Sign-off Details */}

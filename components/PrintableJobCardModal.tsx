@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode';
 import { JobCard } from '@/types';
-import { X, Printer, Share2, Send, ExternalLink, Check, Copy } from 'lucide-react';
+import { X, Printer, Share2, Send, Check, Copy, Download, Image as ImageIcon } from 'lucide-react';
 
 interface PrintableJobCardModalProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ export function PrintableJobCardModal({ isOpen, onClose, jobCard }: PrintableJob
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [trackingUrl, setTrackingUrl] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen && jobCard) {
@@ -23,7 +24,7 @@ export function PrintableJobCardModal({ isOpen, onClose, jobCard }: PrintableJob
       setTrackingUrl(url);
 
       QRCode.toDataURL(url, {
-        width: 240,
+        width: 320,
         margin: 1,
         color: {
           dark: '#0f172a',
@@ -62,6 +63,108 @@ export function PrintableJobCardModal({ isOpen, onClose, jobCard }: PrintableJob
     window.open(`mailto:?subject=${subject}&body=${body}`);
   };
 
+  // Generate and Download clean PNG image sticker
+  const handleDownloadStickerPNG = () => {
+    setIsDownloading(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 750;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Border
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#2563eb';
+      ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+      // Header Banner
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(16, 16, canvas.width - 32, 70);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 22px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SYNCHRO ELECTRICALS PVT. LTD.', canvas.width / 2, 58);
+
+      // QR Code Image
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.onload = () => {
+        ctx.drawImage(qrImg, (canvas.width - 300) / 2, 110, 300, 300);
+
+        // Subtext
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = 'bold 16px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SCAN WITH PHONE CAMERA FOR LIVE TRACKING', canvas.width / 2, 440);
+
+        // Horizontal Line
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(40, 460);
+        ctx.lineTo(canvas.width - 40, 460);
+        ctx.stroke();
+
+        // Details
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#2563eb';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText(`JC: ${jobCard.job_card_no}`, 50, 500);
+
+        ctx.fillStyle = '#475569';
+        ctx.font = 'bold 18px Arial, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(jobCard.assemblyLine, canvas.width - 50, 500);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 20px Arial, sans-serif';
+        ctx.fillText(jobCard.product_name, 50, 545);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '16px Arial, sans-serif';
+        ctx.fillText(`Panel Type: ${jobCard.panel_type}`, 50, 585);
+        ctx.textAlign = 'right';
+        ctx.fillText(`Date: ${jobCard.date}`, canvas.width - 50, 585);
+
+        // Line
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(40, 615);
+        ctx.lineTo(canvas.width - 40, 615);
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.fillText(`Supervisor: ${jobCard.supervisor_name}`, 50, 655);
+        ctx.textAlign = 'right';
+        ctx.fillText(`PPC: ${jobCard.ppc_name}`, canvas.width - 50, 655);
+
+        // Footer
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(trackingUrl, canvas.width / 2, 705);
+
+        // Trigger Download
+        const a = document.createElement('a');
+        a.download = `Sticker_${jobCard.job_card_no}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        setIsDownloading(false);
+      };
+      qrImg.src = qrDataUrl;
+    } catch (e) {
+      console.error('Error exporting sticker PNG:', e);
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
@@ -92,9 +195,9 @@ export function PrintableJobCardModal({ isOpen, onClose, jobCard }: PrintableJob
           {/* QR Code Image */}
           <div className="bg-white p-2 border-2 border-slate-300 rounded-xl shadow-sm flex items-center justify-center">
             {qrDataUrl ? (
-              <img src={qrDataUrl} alt={`QR for ${jobCard.job_card_no}`} className="w-40 h-40 object-contain" />
+              <img src={qrDataUrl} alt={`QR for ${jobCard.job_card_no}`} className="w-44 h-44 object-contain" />
             ) : (
-              <div className="w-40 h-40 flex items-center justify-center text-xs text-slate-400">
+              <div className="w-44 h-44 flex items-center justify-center text-xs text-slate-400">
                 Generating QR...
               </div>
             )}
@@ -135,13 +238,22 @@ export function PrintableJobCardModal({ isOpen, onClose, jobCard }: PrintableJob
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-3 gap-2 pt-1 print:hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 print:hidden">
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-xs font-semibold shadow transition flex items-center justify-center space-x-1.5"
           >
             <Printer className="w-4 h-4" />
-            <span>Print Sticker</span>
+            <span>Print</span>
+          </button>
+          <button
+            onClick={handleDownloadStickerPNG}
+            disabled={isDownloading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-semibold shadow transition flex items-center justify-center space-x-1.5"
+            title="Save PNG image file"
+          >
+            <Download className="w-4 h-4" />
+            <span>{isDownloading ? 'Saving...' : 'PNG File'}</span>
           </button>
           <button
             onClick={handleShareWhatsApp}

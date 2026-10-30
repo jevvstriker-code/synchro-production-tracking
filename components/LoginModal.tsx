@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { X, Lock, ShieldCheck, KeyRound, User, CheckCircle2 } from 'lucide-react';
+import { X, Lock, ShieldCheck, KeyRound, User, Delete } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -22,14 +22,14 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
 
   if (!isOpen) return null;
 
-  const handlePinSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!pin.trim()) {
+  const handlePinSubmit = async (pinValue?: string) => {
+    const val = (pinValue || pin).trim();
+    if (!val) {
       setErrorMsg('Please enter your 4-digit PIN');
       return;
     }
     setErrorMsg(null);
-    const user = await loginWithPin(pin.trim());
+    const user = await loginWithPin(val);
     if (user) {
       setPin('');
       if (onSuccess) onSuccess();
@@ -37,6 +37,27 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
     } else {
       setErrorMsg('Invalid PIN code or inactive account.');
     }
+  };
+
+  const handleKeypadPress = (digit: string) => {
+    if (pin.length < 6) {
+      const newPin = pin + digit;
+      setPin(newPin);
+      if (newPin.length === 4) {
+        // Auto submit on 4th digit
+        setTimeout(() => {
+          handlePinSubmit(newPin);
+        }, 150);
+      }
+    }
+  };
+
+  const handleKeypadBackspace = () => {
+    setPin((prev) => prev.slice(0, -1));
+  };
+
+  const handleKeypadClear = () => {
+    setPin('');
   };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
@@ -67,11 +88,11 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200">
           <div className="flex items-center space-x-2">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
@@ -111,7 +132,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
               authMode === 'pin' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Fast PIN Login
+            Fast PIN Pad
           </button>
           <button
             type="button"
@@ -120,38 +141,78 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
               authMode === 'credentials' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Username & Password
+            Username & Pass
           </button>
         </div>
 
         {authMode === 'pin' ? (
-          <form onSubmit={handlePinSubmit} className="space-y-4">
+          <div className="space-y-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 text-center">
                 Enter 4-Digit Security PIN
               </label>
-              <input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="••••"
-                autoFocus
-                className="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 text-center text-2xl tracking-[0.4em] font-mono text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-              />
+              {/* PIN Display Dots */}
+              <div className="flex justify-center items-center space-x-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+                {[0, 1, 2, 3].map((idx) => {
+                  const isFilled = pin.length > idx;
+                  return (
+                    <div
+                      key={idx}
+                      className={`w-4 h-4 rounded-full transition-all duration-150 ${
+                        isFilled ? 'bg-blue-600 scale-110 shadow-sm' : 'bg-slate-300'
+                      }`}
+                    ></div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Industrial Touch Keypad (Big Buttons for Gloves / Wet Touchscreens) */}
+            <div className="grid grid-cols-3 gap-2 pt-1 select-none">
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+                <button
+                  key={digit}
+                  type="button"
+                  onClick={() => handleKeypadPress(digit)}
+                  className="bg-slate-50 hover:bg-blue-50 active:bg-blue-200 border border-slate-200 active:border-blue-500 text-slate-800 text-xl font-bold py-3 rounded-2xl shadow-xs transition active:scale-95"
+                >
+                  {digit}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleKeypadClear}
+                className="bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 text-slate-600 text-xs font-bold py-3 rounded-2xl transition"
+              >
+                CLEAR
+              </button>
+              <button
+                type="button"
+                onClick={() => handleKeypadPress('0')}
+                className="bg-slate-50 hover:bg-blue-50 active:bg-blue-200 border border-slate-200 active:border-blue-500 text-slate-800 text-xl font-bold py-3 rounded-2xl shadow-xs transition active:scale-95"
+              >
+                0
+              </button>
+              <button
+                type="button"
+                onClick={handleKeypadBackspace}
+                className="bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 text-slate-700 flex items-center justify-center py-3 rounded-2xl transition"
+                title="Backspace"
+              >
+                <Delete className="w-5 h-5" />
+              </button>
             </div>
 
             <button
-              type="submit"
+              type="button"
+              onClick={() => handlePinSubmit()}
               disabled={isLoading || pin.length < 3}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm shadow transition flex items-center justify-center space-x-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm shadow transition flex items-center justify-center space-x-2 mt-1"
             >
               <KeyRound className="w-4 h-4" />
               <span>{isLoading ? 'Verifying...' : 'Authorize Access'}</span>
             </button>
-          </form>
+          </div>
         ) : (
           <form onSubmit={handleCredentialsSubmit} className="space-y-3">
             <div>
@@ -192,10 +253,10 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
           </form>
         )}
 
-        {/* Fast Preset Login Buttons for Instant Testing on Shop Floor */}
+        {/* Fast Preset Login Buttons for Shop Floor Testing */}
         <div className="pt-2 border-t border-slate-200">
           <div className="text-[10px] uppercase font-bold text-slate-400 text-center tracking-wider mb-2">
-            Quick 1-Tap Login
+            1-Tap Quick Staff Switch
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-center">
             <button

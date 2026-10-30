@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { userService } from '@/services/userService';
 import { auditService } from '@/services/auditService';
-import { AppUser, UserRole, AuditTrail } from '@/types';
+import { jobCardService } from '@/services/jobCardService';
+import { stageLogService } from '@/services/stageLogService';
+import { AppUser, UserRole, AuditTrail, JobCard, StageLog, PRODUCTION_STAGES } from '@/types';
 import {
   Settings,
   Users,
@@ -19,16 +21,21 @@ import {
   Search,
   Database,
   RefreshCw,
-  Lock
+  Clock,
+  Calendar,
+  AlertTriangle,
+  Lock,
+  Edit3
 } from 'lucide-react';
 
 export function AdminPortalView() {
   const { currentUser, isAdmin } = useAuth();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditTrail[]>([]);
+  const [jobCards, setJobCards] = useState<JobCard[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userSearch, setUserSearch] = useState<string>('');
-  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'audit' | 'system'>('users');
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'audit' | 'timestamps' | 'system'>('users');
 
   // Add / Edit User Modal state
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
@@ -41,6 +48,19 @@ export function AdminPortalView() {
   const [formPhone, setFormPhone] = useState<string>('');
   const [formMsg, setFormMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  // Timestamp Override Console state
+  const [selectedJcNo, setSelectedJcNo] = useState<string>('');
+  const [panelStages, setPanelStages] = useState<StageLog[]>([]);
+  const [selectedPanel, setSelectedPanel] = useState<JobCard | null>(null);
+  const [editingStage, setEditingStage] = useState<StageLog | null>(null);
+  const [overrideStartDate, setOverrideStartDate] = useState<string>('');
+  const [overrideStartTime, setOverrideStartTime] = useState<string>('');
+  const [overrideEndDate, setOverrideEndDate] = useState<string>('');
+  const [overrideEndTime, setOverrideEndTime] = useState<string>('');
+  const [overrideHours, setOverrideHours] = useState<string>('');
+  const [overrideReason, setOverrideReason] = useState<string>('');
+  const [overrideStatusMsg, setOverrideStatusMsg] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -48,16 +68,88 @@ export function AdminPortalView() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [uList, aLogs] = await Promise.all([
+      const [uList, aLogs, jcList] = await Promise.all([
         userService.getAllUsers(),
         auditService.getAuditLogs(100),
+        jobCardService.getAllJobCards(),
       ]);
       setUsers(uList);
       setAuditLogs(aLogs);
+      setJobCards(jcList);
+      if (jcList.length > 0 && !selectedJcNo) {
+        handleSelectJobCardForTimestamps(jcList[0].job_card_no);
+      }
     } catch (e) {
       console.error('Error loading admin portal data', e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSelectJobCardForTimestamps = async (jcNo: string) => {
+    setSelectedJcNo(jcNo);
+    const jc = jobCards.find((j) => j.job_card_no === jcNo) || null;
+    setSelectedPanel(jc);
+    if (jcNo) {
+      try {
+        const res = await jobCardService.getJobCardWithStages(jcNo);
+        if (res) {
+          setPanelStages(res.stages);
+        }
+      } catch (e) {
+        console.error('Failed to load stages for timestamp console', e);
+      }
+    }
+  };
+
+  const handleOpenStageOverride = (st: StageLog) => {
+    setEditingStage(st);
+    setOverrideStartDate(st.start_date || new Date().toISOString().substring(0, 10));
+    setOverrideStartTime(st.start_time ? st.start_time.substring(0, 5) : '09:00');
+    setOverrideEndDate(st.end_date || new Date().toISOString().substring(0, 10));
+    setOverrideEndTime(st.end_time ? st.end_time.substring(0, 5) : '15:00');
+    setOverrideHours(st.duration_hours ? String(st.duration_hours) : '2.0');
+    setOverrideReason(st.admin_override_reason || '');
+    setOverrideStatusMsg(null);
+  };
+
+  const handleSaveStageOverride = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStage || !selectedPanel) return;
+    if (!overrideReason.trim()) {
+      setOverrideStatusMsg('Mandatory override reason required for audit compliance.');
+      return;
+    }
+
+    try {
+      await stageLogService.adminOverrideStage(editingStage.id, {
+        startDate: overrideStartDate,
+        startTime: overrideStartTime,
+        endDate: overrideEndDate,
+        endTime: overrideEndTime,
+        durationHours: parseFloat(overrideHours) || 1.0,
+        operatorName: editingStage.operator_name || 'Admin Adjust',
+        delayReason: editingStage.delay_reason || 'None',
+        adminName: currentUser?.full_name || 'System Admin',
+        reason: overrideReason.trim(),
+      });
+
+      await auditService.logAudit({
+        job_card_no: selectedPanel.job_card_no,
+        action: `Admin Override Stage: ${editingStage.stage_name}`,
+        actor_name: currentUser?.full_name || 'Admin',
+        actor_role: 'admin',
+        details: `Reason: ${overrideReason.trim()} | Set Times: ${overrideStartDate} ${overrideStartTime} -> ${overrideEndDate} ${overrideEndTime}`,
+      });
+
+      setOverrideStatusMsg('Stage timestamps successfully overridden.');
+      await handleSelectJobCardForTimestamps(selectedPanel.job_card_no);
+      setTimeout(() => {
+        setEditingStage(null);
+      }, 1000);
+    } catch (e: any) {
+      console.error('Failed to save stage override', e);
+      setOverrideStatusMsg(e.message || 'Error saving override.');
     }
   };
 
@@ -189,7 +281,7 @@ export function AdminPortalView() {
               Enterprise Admin Portal
             </h2>
             <p className="text-xs text-slate-500">
-              Manage Fitter & Supervisor credentials, access PINs, tamper-evident audit logs & database health
+              Manage Fitter & Supervisor credentials, access PINs, tamper-evident audit logs & timestamp overrides
             </p>
           </div>
         </div>
@@ -213,7 +305,7 @@ export function AdminPortalView() {
       </div>
 
       {/* Admin Tab Selector */}
-      <div className="flex space-x-2 border-b border-slate-200 pb-2">
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveAdminTab('users')}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
@@ -224,6 +316,17 @@ export function AdminPortalView() {
         >
           <Users className="w-4 h-4" />
           <span>Staff Accounts ({users.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminTab('timestamps')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
+            activeAdminTab === 'timestamps'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>Timestamp Correction Console</span>
         </button>
         <button
           onClick={() => setActiveAdminTab('audit')}
@@ -355,7 +458,223 @@ export function AdminPortalView() {
         </div>
       )}
 
-      {/* Tab 2: Activity Audit Trail */}
+      {/* Tab 2: Timestamp Correction Console (Admin Privilege) */}
+      {activeAdminTab === 'timestamps' && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+            <div>
+              <h3 className="font-bold text-sm text-slate-900 flex items-center space-x-1.5">
+                <Clock className="w-4 h-4 text-blue-600" />
+                <span>Stage Timestamp Correction & Override Console</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Only system administrators can adjust historical stage timestamps with mandatory audit justification
+              </p>
+            </div>
+
+            {/* Panel Selector */}
+            <div className="flex items-center space-x-2">
+              <label className="text-xs font-semibold text-slate-600">Select Panel:</label>
+              <select
+                value={selectedJcNo}
+                onChange={(e) => handleSelectJobCardForTimestamps(e.target.value)}
+                className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
+              >
+                {jobCards.map((j) => (
+                  <option key={j.id} value={j.job_card_no}>
+                    {j.job_card_no} — {j.product_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedPanel && (
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap justify-between items-center text-xs text-slate-700 gap-2">
+              <div>
+                <span className="text-slate-400">Job Card:</span>{' '}
+                <strong className="font-mono text-blue-700">{selectedPanel.job_card_no}</strong> •{' '}
+                <strong>{selectedPanel.product_name}</strong>
+              </div>
+              <div>
+                <span className="text-slate-400">Line:</span>{' '}
+                <strong className="bg-white px-2 py-0.5 rounded border border-slate-200">
+                  {selectedPanel.assemblyLine}
+                </strong>{' '}
+                • <span className="text-slate-400">Status:</span>{' '}
+                <strong className="capitalize text-emerald-700">{selectedPanel.status}</strong>
+              </div>
+            </div>
+          )}
+
+          {/* 11 Stages Timestamp Table */}
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <table className="w-full text-left border-collapse min-w-[700px] text-xs">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                  <th className="py-2.5 px-3">Stage # & Name</th>
+                  <th className="py-2.5 px-3">Start Timestamp</th>
+                  <th className="py-2.5 px-3">End Timestamp</th>
+                  <th className="py-2.5 px-3">Duration (Hrs)</th>
+                  <th className="py-2.5 px-3">Operator</th>
+                  <th className="py-2.5 px-3">Type</th>
+                  <th className="py-2.5 px-3 text-right">Admin Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {panelStages.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-6 text-slate-400">Loading stage logs...</td>
+                  </tr>
+                ) : (
+                  panelStages.map((st, idx) => (
+                    <tr key={st.id} className="hover:bg-slate-50 transition">
+                      <td className="py-2.5 px-3 font-semibold text-slate-900">
+                        {idx + 1}. {st.stage_name}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600">
+                        {st.start_date ? `${st.start_date} ${st.start_time || ''}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600">
+                        {st.end_date ? `${st.end_date} ${st.end_time || ''}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-blue-700">
+                        {st.duration_display || (st.duration_hours ? `${st.duration_hours}h` : '—')}
+                      </td>
+                      <td className="py-2.5 px-3">{st.operator_name || '—'}</td>
+                      <td className="py-2.5 px-3">
+                        {st.is_admin_override ? (
+                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                            Overridden
+                          </span>
+                        ) : (
+                          <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded">
+                            Clock Auto
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <button
+                          onClick={() => handleOpenStageOverride(st)}
+                          className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded text-xs font-semibold transition inline-flex items-center space-x-1"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Override</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Admin Override Modal Expansion */}
+          {editingStage && (
+            <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+              <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-amber-600" />
+                    <span>Override Timestamps: {editingStage.stage_name}</span>
+                  </h3>
+                  <button onClick={() => setEditingStage(null)} className="text-slate-400 hover:text-slate-700 p-1">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {overrideStatusMsg && (
+                  <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded-xl font-medium">
+                    {overrideStatusMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleSaveStageOverride} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Start Date & Time</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={overrideStartDate}
+                        onChange={(e) => setOverrideStartDate(e.target.value)}
+                        className="bg-white border border-slate-300 rounded-xl p-2 text-xs"
+                      />
+                      <input
+                        type="time"
+                        value={overrideStartTime}
+                        onChange={(e) => setOverrideStartTime(e.target.value)}
+                        className="bg-white border border-slate-300 rounded-xl p-2 text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">End Date & Time</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={overrideEndDate}
+                        onChange={(e) => setOverrideEndDate(e.target.value)}
+                        className="bg-white border border-slate-300 rounded-xl p-2 text-xs"
+                      />
+                      <input
+                        type="time"
+                        value={overrideEndTime}
+                        onChange={(e) => setOverrideEndTime(e.target.value)}
+                        className="bg-white border border-slate-300 rounded-xl p-2 text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Calculated Hours</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      value={overrideHours}
+                      onChange={(e) => setOverrideHours(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Override Justification (Required for Audit Trail) *
+                    </label>
+                    <textarea
+                      required
+                      rows={2}
+                      placeholder="e.g., Fitter forgot to clock in after lunch break; confirmed by supervisor Amit."
+                      value={overrideReason}
+                      onChange={(e) => setOverrideReason(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setEditingStage(null)}
+                      className="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow"
+                    >
+                      Save Override
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Activity Audit Trail */}
       {activeAdminTab === 'audit' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
@@ -390,7 +709,7 @@ export function AdminPortalView() {
         </div>
       )}
 
-      {/* Tab 3: System / Database Info */}
+      {/* Tab 4: System / Database Info */}
       {activeAdminTab === 'system' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <h3 className="font-bold text-sm text-slate-900">Database & Schema Isolation Status</h3>

@@ -1,0 +1,22 @@
+{
+  "name": "Synchro Electricals Production Tracking",
+  "short_name": "Synchro Track",
+  "description": "Industrial Panel Production Tracking, QR Code Serial Numbers, Live Workstation Monitoring and Manpower Analytics",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
