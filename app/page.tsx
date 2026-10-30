@@ -13,6 +13,7 @@ import { LiveCameraModal } from '@/components/LiveCameraModal';
 import { LoginModal } from '@/components/LoginModal';
 import { TeamPerformanceView } from '@/components/TeamPerformanceView';
 import { AdminPortalView } from '@/components/AdminPortalView';
+import { ElectricCurrentTracker } from '@/components/ElectricCurrentTracker';
 
 import { jobCardService } from '@/services/jobCardService';
 import { stageLogService } from '@/services/stageLogService';
@@ -46,7 +47,8 @@ import {
   FileText,
   CheckSquare,
   Square,
-  Factory
+  Factory,
+  Zap
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -951,14 +953,58 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Panels in selected line */}
+            {/* Line Power Load & Throughput Banner */}
+            {(() => {
+              const linePanels = jobCards.filter((j) => (j.assemblyLine || j.assembly_line) === selectedAssemblyLine);
+              const completedCount = linePanels.filter((j) => j.status === 'completed' || j.status === 'dispatched').length;
+              const delayedCount = linePanels.filter((j) => j.status === 'delayed').length;
+              const inProgressCount = linePanels.filter((j) => j.status === 'in_progress').length;
+              const total = linePanels.length;
+              const linePowerPct = total > 0 ? Math.round((completedCount / total) * 100) : 100;
+
+              return (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-cyan-400/50 flex items-center justify-center text-cyan-300 spark-indicator">
+                      <Zap className="w-5 h-5 fill-current" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-white flex items-center space-x-2">
+                        <span>{selectedAssemblyLine} Grid Power Load</span>
+                        <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-700 px-2 py-0.5 rounded-full font-mono font-bold">
+                          {linePowerPct}% LINE ENERGIZED
+                        </span>
+                      </h4>
+                      <p className="text-xs text-slate-400">
+                        {total} Panels Active on Floor • {completedCount} Fully Powered (Done) • {inProgressCount} Under Active Draw
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4 text-xs font-mono">
+                    <div className="text-right">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Delayed</span>
+                      <strong className={delayedCount > 0 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
+                        {delayedCount} Panels
+                      </strong>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">In Flow</span>
+                      <strong className="text-cyan-400 font-bold">{inProgressCount} Active</strong>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Panels in selected line with Inline Electric Current Running Tracker */}
             <div className="space-y-4">
               {jobCards
                 .filter((j) => (j.assemblyLine || j.assembly_line) === selectedAssemblyLine)
                 .map((jc) => (
                   <div
                     key={jc.id}
-                    className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3"
+                    className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4 hover:border-slate-300 transition"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
                       <div>
@@ -970,18 +1016,12 @@ export default function HomePage() {
                             {jc.panel_type}
                           </span>
                           <span className="text-xs text-slate-500">Lot: {jc.lot_qty}</span>
+                          <span className="text-xs text-slate-400">• Cust: {jc.customer_code || 'Stock'}</span>
                         </div>
                         <h4 className="font-bold text-base text-slate-900 mt-1">{jc.product_name}</h4>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleOpenWizard(jc.job_card_no)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center space-x-1.5"
-                        >
-                          <Camera className="w-4 h-4" />
-                          <span>Open Update Wizard</span>
-                        </button>
                         <button
                           onClick={() => handleOpenPanelReport(jc)}
                           className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1"
@@ -995,18 +1035,27 @@ export default function HomePage() {
                         >
                           Print QR
                         </button>
+                        <button
+                          onClick={() => handleOpenWizard(jc.job_card_no)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition flex items-center space-x-1.5"
+                        >
+                          <Camera className="w-4 h-4" />
+                          <span>Open Wizard</span>
+                        </button>
                       </div>
                     </div>
 
-                    <div className="text-xs text-slate-600 flex justify-between items-center bg-slate-50 p-2.5 rounded-xl">
-                      <span>Current Stage: <strong className="text-blue-700">{jc.current_stage}</strong></span>
-                      <span>Supervisor: <strong>{jc.supervisor_name}</strong></span>
-                      <span>PPC: <strong>{jc.ppc_name}</strong></span>
-                    </div>
+                    {/* LIVE ELECTRIC CURRENT RUNNING TRACKER LINE */}
+                    <ElectricCurrentTracker
+                      jobCard={jc}
+                      onOpenWizard={handleOpenWizard}
+                      onOpenReport={handleOpenPanelReport}
+                      onRefresh={loadAllData}
+                    />
                   </div>
                 ))}
 
-              {jobCards.filter((j) => j.assemblyLine === selectedAssemblyLine).length === 0 && (
+              {jobCards.filter((j) => (j.assemblyLine || j.assembly_line) === selectedAssemblyLine).length === 0 && (
                 <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-xs text-slate-400">
                   No panels assigned to {selectedAssemblyLine}.
                 </div>

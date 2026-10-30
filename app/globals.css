@@ -41,3 +41,77 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ================= ELECTRICITY CURRENT RUNNING ANIMATIONS ================= */
+@keyframes electric-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes electric-spark {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 6px #00f0ff) drop-shadow(0 0 12px #3b82f6);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 14px #67e8f9) drop-shadow(0 0 22px #38bdf8);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+  }
+  70% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+  }
+  100% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+@keyframes full-power-surge {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.6), inset 0 0 8px rgba(52, 211, 153, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.9), inset 0 0 14px rgba(110, 231, 183, 0.7);
+  }
+}
+
+.electric-current-flow {
+  background: linear-gradient(90deg, #1d4ed8, #00f0ff, #38bdf8, #60a5fa, #00f0ff, #1d4ed8);
+  background-size: 200% 100%;
+  animation: electric-flow 1.5s linear infinite;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.6), 0 0 18px rgba(37, 99, 235, 0.4);
+}
+
+.electric-full-power {
+  background: linear-gradient(90deg, #047857, #10b981, #34d399, #a7f3d0, #10b981, #047857);
+  background-size: 200% 100%;
+  animation: electric-flow 1.2s linear infinite, full-power-surge 2s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.8), 0 0 22px rgba(5, 150, 105, 0.5);
+}
+
+.electric-delayed {
+  background: linear-gradient(90deg, #b45309, #f59e0b, #fde68a, #f59e0b, #b45309);
+  background-size: 200% 100%;
+  animation: electric-flow 1.8s linear infinite;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+}
+
+.electric-pulse-node {
+  animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.spark-indicator {
+  animation: electric-spark 1s ease-in-out infinite;
+}
