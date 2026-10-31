@@ -27,7 +27,8 @@
     print-color-adjust: exact !important;
   }
 
-  .print\:hidden {
+  .print\:hidden,
+  .pdf-export-hidden-on-print {
     display: none !important;
   }
 
