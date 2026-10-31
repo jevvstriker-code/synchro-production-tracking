@@ -338,16 +338,18 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col antialiased text-slate-800">
-      {/* Top Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        openScanner={() => setIsScannerOpen(true)}
-        openLoginModal={() => setIsLoginModalOpen(true)}
-      />
+      {/* Underlying Web Application (Hidden during print so only printable modals render) */}
+      <div className="print:hidden flex flex-col flex-1">
+        {/* Top Navbar */}
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          openScanner={() => setIsScannerOpen(true)}
+          openLoginModal={() => setIsLoginModalOpen(true)}
+        />
 
-      {/* Main Container */}
-      <main className="flex-1 w-full max-w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto">
+        {/* Main Container */}
+        <main className="flex-1 w-full max-w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto">
         {/* ================= TAB 1: DASHBOARD ================= */}
         {activeTab === 'dashboard' && (
           <section className="space-y-4 sm:space-y-6">
@@ -1419,6 +1421,7 @@ export default function HomePage() {
         {/* ================= TAB 8: ADMIN PORTAL ================= */}
         {activeTab === 'admin-portal' && <AdminPortalView />}
       </main>
+      </div>
 
       {/* MODALS */}
 

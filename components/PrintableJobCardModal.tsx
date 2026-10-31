@@ -166,8 +166,8 @@ export function PrintableJobCardModal({ isOpen, onClose, jobCard }: PrintableJob
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
+    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto print-modal-overlay print:p-0 print:m-0 print:overflow-visible">
+      <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto print-modal-container print:shadow-none print:border-none print:max-h-none print:rounded-none">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 print:hidden">
           <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
             <span>Panel QR Code & Printable Sticker</span>

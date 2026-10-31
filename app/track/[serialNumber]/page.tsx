@@ -216,8 +216,10 @@ export default function TrackPanelPage({
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col antialiased text-slate-800">
-      {/* Top Header */}
-      <header className="bg-blue-600 text-white px-4 py-3.5 shadow-md sticky top-0 z-30">
+      {/* Background Screen View (Hidden when printing dossier) */}
+      <div className="print:hidden flex flex-col flex-1">
+        {/* Top Header */}
+        <header className="bg-blue-600 text-white px-4 py-3.5 shadow-md sticky top-0 z-30">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 text-white hover:text-blue-100 transition">
             <div className="bg-white p-1.5 rounded-lg text-blue-600 shadow-sm flex items-center justify-center w-8 h-8">
@@ -524,6 +526,7 @@ export default function TrackPanelPage({
           </button>
         </div>
       </main>
+      </div>
 
       {/* Fast Stage Wizard Modal */}
       <FastStageWizardModal
