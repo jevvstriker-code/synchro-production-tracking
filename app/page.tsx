@@ -503,7 +503,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060a17] cyber-grid-bg flex flex-col antialiased text-slate-100">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col antialiased text-slate-900">
       {/* 0.1 Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
       {welcomeModalData && (
         <WelcomeCelebrationModal
@@ -577,11 +577,11 @@ export default function HomePage() {
         {activeTab === 'dashboard' && (
           <section className="space-y-4 sm:space-y-6">
             {/* Dashboard Period Filter */}
-            <div className="cyber-card rounded-2xl p-3 sm:p-4 shadow-lg border border-cyan-500/25 flex flex-wrap items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/90 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="p-1.5 bg-cyan-950/80 text-cyan-400 rounded-lg border border-cyan-500/30 flex items-center space-x-1.5">
+                <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg flex items-center space-x-1.5">
                   <Calendar className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider font-mono">Telemetry Window:</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Production Period:</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
                   {[
@@ -603,10 +603,10 @@ export default function HomePage() {
                           setProdPeriod(btn.id);
                         }
                       }}
-                      className={`px-3 py-1.5 text-xs font-bold font-mono rounded-xl transition ${
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition ${
                         (btn.id === 'custom' && isProdCustomDate) || (!isProdCustomDate && prodPeriod === btn.id)
-                          ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50'
-                          : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                       }`}
                     >
                       {btn.label}
@@ -616,45 +616,46 @@ export default function HomePage() {
               </div>
 
               {isProdCustomDate && (
-                <div className="flex items-center space-x-2 text-xs bg-slate-950/80 border border-cyan-500/30 rounded-xl p-1.5">
-                  <span className="text-[11px] font-semibold text-cyan-400 font-mono uppercase">From:</span>
+                <div className="flex items-center space-x-2 text-xs bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                  <span className="text-[11px] font-semibold text-slate-600 uppercase">From:</span>
                   <input
                     type="date"
                     value={prodStartDate}
                     onChange={(e) => setProdStartDate(e.target.value)}
-                    className="cyber-input rounded-lg px-2 py-1 text-white focus:outline-none focus:border-cyan-400 font-mono text-xs"
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 focus:outline-none focus:border-blue-500 text-xs"
                   />
-                  <span className="text-slate-400 font-bold font-mono">to</span>
+                  <span className="text-slate-500 font-bold">to</span>
                   <input
                     type="date"
                     value={prodEndDate}
                     onChange={(e) => setProdEndDate(e.target.value)}
-                    className="cyber-input rounded-lg px-2 py-1 text-white focus:outline-none focus:border-cyan-400 font-mono text-xs"
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 focus:outline-none focus:border-blue-500 text-xs"
                   />
                 </div>
               )}
             </div>
+
             {/* Delay Bottleneck Banner */}
             {analyticsData && analyticsData.delayedCount > 0 && (
-              <div className="bg-amber-950/40 border-l-4 border-amber-500 p-4 rounded-2xl shadow-lg border border-amber-500/30 flex items-center justify-between">
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-2xl shadow-xs border border-amber-200 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-amber-900/60 text-amber-400 rounded-xl border border-amber-500/40">
+                  <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
                     <AlertTriangle className="w-5 h-5 animate-pulse" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
                       Shop Floor Bottleneck Warning
                     </h4>
-                    <p className="text-xs text-amber-200/80 mt-0.5">
+                    <p className="text-xs text-amber-800 mt-0.5">
                       {analyticsData.delayedCount} panel(s) flagged with material, fabrication, busbar or testing delays.
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setActiveTab('assembly-lines')}
-                  className="text-xs font-bold text-amber-300 hover:text-amber-200 hover:underline flex items-center space-x-1 font-mono"
+                  className="text-xs font-bold text-amber-800 hover:text-amber-900 hover:underline flex items-center space-x-1"
                 >
-                  <span>INVESTIGATE LINES</span>
+                  <span>Investigate Lines</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -662,88 +663,88 @@ export default function HomePage() {
 
             {/* KPI Cards Row */}
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-              <div className="cyber-card p-4 rounded-2xl shadow-lg border border-cyan-500/25 transition hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/90 transition hover:shadow-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-cyan-400 font-mono">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Active Panels
                   </span>
-                  <div className="p-2 bg-cyan-950/80 text-cyan-400 rounded-xl border border-cyan-500/30">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
                     <Boxes className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                     {analyticsData?.activeCount ?? 0}
                   </span>
-                  <span className="ml-2 text-xs text-cyan-300/70 font-mono">Live On Floor</span>
+                  <span className="ml-2 text-xs text-slate-500">Live On Floor</span>
                 </div>
               </div>
 
-              <div className="cyber-card p-4 rounded-2xl shadow-lg border border-emerald-500/25 transition hover:border-emerald-400/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/90 transition hover:shadow-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-400 font-mono">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Completed &amp; Shipped
                   </span>
-                  <div className="p-2 bg-emerald-950/80 text-emerald-400 rounded-xl border border-emerald-500/30">
+                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
                     <CheckCircle className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
                     {analyticsData?.completedCount ?? 0}
                   </span>
-                  <span className="ml-2 text-xs text-emerald-300 font-mono">Dispatched</span>
+                  <span className="ml-2 text-xs text-slate-500">Dispatched</span>
                 </div>
               </div>
 
-              <div className="cyber-card p-4 rounded-2xl shadow-lg border border-amber-500/25 transition hover:border-amber-400/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/90 transition hover:shadow-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-400 font-mono">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Delayed Panels
                   </span>
-                  <div className="p-2 bg-amber-950/80 text-amber-400 rounded-xl border border-amber-500/30">
+                  <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
                     <Clock className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-amber-600">
                     {analyticsData?.delayedCount ?? 0}
                   </span>
-                  <span className="ml-2 text-xs text-amber-300 font-mono">Wait Time</span>
+                  <span className="ml-2 text-xs text-slate-500">Wait Time</span>
                 </div>
               </div>
 
-              <div className="cyber-card p-4 rounded-2xl shadow-lg border border-indigo-500/25 transition hover:border-indigo-400/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/90 transition hover:shadow-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-indigo-400 font-mono">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Avg Cycle Time
                   </span>
-                  <div className="p-2 bg-indigo-950/80 text-indigo-400 rounded-xl border border-indigo-500/30">
+                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                     <Timer className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-indigo-300 font-mono">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                     {analyticsData?.avgCycleHours ?? 0}h
                   </span>
-                  <span className="ml-2 text-xs text-slate-400 font-mono">Per Stage</span>
+                  <span className="ml-2 text-xs text-slate-500">Per Stage</span>
                 </div>
               </div>
 
-              <div className="col-span-2 sm:col-span-1 cyber-card p-4 rounded-2xl shadow-lg border border-purple-500/25 transition hover:border-purple-400/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+              <div className="col-span-2 sm:col-span-1 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/90 transition hover:shadow-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-purple-400 font-mono">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Rework Register
                   </span>
-                  <div className="p-2 bg-purple-950/80 text-purple-400 rounded-xl border border-purple-500/30">
+                  <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
                     <RotateCcw className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-purple-300 font-mono">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-purple-600">
                     {reworkLogs.length}
                   </span>
-                  <span className="ml-2 text-xs text-purple-300 font-mono">Cases</span>
+                  <span className="ml-2 text-xs text-slate-500">Cases</span>
                 </div>
               </div>
             </div>
@@ -762,17 +763,17 @@ export default function HomePage() {
             )}
 
             {/* Live Panel Production Table */}
-            <div className="cyber-card rounded-2xl p-4 sm:p-5 shadow-xl border border-cyan-500/25 space-y-4">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/90 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center space-x-2.5">
-                  <div className="p-2 bg-cyan-950/80 text-cyan-400 rounded-xl border border-cyan-500/30">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
                     <Boxes className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-base text-white leading-tight font-mono tracking-wide">
+                    <h3 className="font-bold text-base text-slate-900 leading-tight">
                       Live Panel Production Registry
                     </h3>
-                    <p className="text-xs text-slate-400 font-mono">
+                    <p className="text-xs text-slate-500">
                       Sequential shop floor stage tracking, timers &amp; camera QR diagnostics
                     </p>
                   </div>
@@ -780,13 +781,13 @@ export default function HomePage() {
 
                 <div className="flex items-center space-x-2">
                   <div className="relative w-full sm:w-64">
-                    <Search className="w-4 h-4 text-cyan-400/60 absolute left-3 top-2.5" />
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                       type="text"
                       placeholder="Search JC No, Panel or Line..."
                       value={searchFilter}
                       onChange={(e) => setSearchFilter(e.target.value)}
-                      className="cyber-input w-full rounded-xl pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                      className="w-full rounded-xl pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 focus:outline-none transition"
                     />
                   </div>
                 </div>
@@ -794,43 +795,43 @@ export default function HomePage() {
 
               {/* Batch Action Toolbar */}
               {selectedPanelIds.size > 0 && (
-                <div className="bg-cyan-950/40 border border-cyan-500/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 animate-in fade-in duration-150">
-                  <div className="flex items-center space-x-2 text-xs font-bold text-cyan-300 font-mono">
-                    <CheckSquare className="w-4 h-4 text-cyan-400" />
-                    <span>{selectedPanelIds.size} PANEL RECORD{selectedPanelIds.size > 1 ? 'S' : ''} SELECTED</span>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 animate-in fade-in duration-150">
+                  <div className="flex items-center space-x-2 text-xs font-bold text-blue-900">
+                    <CheckSquare className="w-4 h-4 text-blue-600" />
+                    <span>{selectedPanelIds.size} Panel Record{selectedPanelIds.size > 1 ? 's' : ''} Selected</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => handleOpenBatchReport()}
-                      className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-md transition flex items-center space-x-1 font-mono"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs shadow-xs transition flex items-center space-x-1"
                     >
                       <Printer className="w-3.5 h-3.5" />
-                      <span>PRINT BATCH DOSSIER</span>
+                      <span>Print Batch Dossier</span>
                     </button>
                     <button
                       onClick={() => setSelectedPanelIds(new Set())}
-                      className="text-xs text-slate-400 hover:text-white font-mono px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition"
+                      className="text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-slate-200 transition"
                     >
-                      CLEAR
+                      Clear Selection
                     </button>
                   </div>
                 </div>
               )}
 
-              <div className="overflow-x-auto border border-slate-800 rounded-xl">
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
                 <table className="w-full text-left border-collapse min-w-[700px] text-xs">
                   <thead>
-                    <tr className="bg-slate-950 text-cyan-400 uppercase font-mono text-[10px] tracking-wider border-b border-cyan-500/20">
+                    <tr className="bg-slate-50 text-slate-500 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200">
                       <th className="py-3 px-3 w-10 text-center">
                         <button
                           onClick={() => handleToggleSelectAll(filteredPanels)}
-                          className="p-0.5 hover:bg-slate-800 rounded"
+                          className="p-0.5 hover:bg-slate-200 rounded"
                           title="Select / Deselect All Visible"
                         >
                           {selectedPanelIds.size === filteredPanels.length && filteredPanels.length > 0 ? (
-                            <CheckSquare className="w-4 h-4 text-cyan-400" />
+                            <CheckSquare className="w-4 h-4 text-blue-600" />
                           ) : (
-                            <Square className="w-4 h-4 text-slate-500" />
+                            <Square className="w-4 h-4 text-slate-400" />
                           )}
                         </button>
                       </th>
@@ -843,14 +844,14 @@ export default function HomePage() {
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={8} className="text-center py-8 text-slate-400 font-mono">Loading telemetry registry...</td>
+                        <td colSpan={8} className="text-center py-8 text-slate-500">Loading panel registry...</td>
                       </tr>
                     ) : filteredPanels.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="text-center py-8 text-slate-400 font-mono">No panels match filter.</td>
+                        <td colSpan={8} className="text-center py-8 text-slate-500">No panels match filter.</td>
                       </tr>
                     ) : (
                       filteredPanels.map((jc) => {
@@ -862,47 +863,47 @@ export default function HomePage() {
                         return (
                           <tr
                             key={jc.id}
-                            className={`transition ${isSelected ? 'bg-cyan-950/40' : 'hover:bg-slate-800/40'}`}
+                            className={`transition ${isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50/80'}`}
                           >
                             <td className="py-3 px-3 text-center">
                               <button
                                 onClick={() => handleToggleSelectPanel(jc.id)}
-                                className="p-0.5 hover:bg-slate-800 rounded"
+                                className="p-0.5 hover:bg-slate-200 rounded"
                               >
                                 {isSelected ? (
-                                  <CheckSquare className="w-4 h-4 text-cyan-400" />
+                                  <CheckSquare className="w-4 h-4 text-blue-600" />
                                 ) : (
-                                  <Square className="w-4 h-4 text-slate-500" />
+                                  <Square className="w-4 h-4 text-slate-400" />
                                 )}
                               </button>
                             </td>
-                            <td className="py-3 px-4 font-mono font-bold text-cyan-400">
+                            <td className="py-3 px-4 font-mono font-bold text-blue-600">
                               <button
                                 onClick={() => handleOpenWizard(jc.job_card_no)}
-                                className="hover:underline hover:text-cyan-300 flex items-center space-x-1"
+                                className="hover:underline flex items-center space-x-1"
                               >
                                 <QrCode className="w-3.5 h-3.5" />
                                 <span>{jc.job_card_no}</span>
                               </button>
                             </td>
-                            <td className="py-3 px-4 font-semibold text-white">{jc.product_name}</td>
+                            <td className="py-3 px-4 font-semibold text-slate-900">{jc.product_name}</td>
                             <td className="py-3 px-4">
-                              <span className="px-2 py-0.5 bg-slate-900 border border-slate-700 text-slate-300 rounded text-[11px] font-mono">
+                              <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded text-[11px] font-medium">
                                 {jc.assemblyLine || jc.assembly_line}
                               </span>
                             </td>
-                            <td className="py-3 px-4 font-medium text-slate-200">{jc.current_stage}</td>
+                            <td className="py-3 px-4 font-medium text-slate-700">{jc.current_stage}</td>
                             <td className="py-3 px-4">
                               <div className="flex items-center space-x-2">
-                                <span className="font-mono text-[11px] w-7 text-cyan-300">{progress}%</span>
-                                <div className="w-20 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <span className="font-mono text-[11px] w-7 text-slate-600">{progress}%</span>
+                                <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
                                   <div
                                     className={`h-full rounded-full transition-all duration-300 ${
                                       isDone
-                                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                                        ? 'bg-emerald-500'
                                         : isDelayed
-                                        ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
-                                        : 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]'
+                                        ? 'bg-amber-500'
+                                        : 'bg-blue-600'
                                     }`}
                                     style={{ width: `${progress}%` }}
                                   ></div>
@@ -911,15 +912,15 @@ export default function HomePage() {
                             </td>
                             <td className="py-3 px-4">
                               {isDone ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   COMPLETED
                                 </span>
                               ) : isDelayed ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-950/80 text-amber-400 border border-amber-500/30">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                   DELAYED
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-500/30">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                   IN PRODUCTION
                                 </span>
                               )}
@@ -927,22 +928,22 @@ export default function HomePage() {
                             <td className="py-3 px-4 text-right space-x-1.5">
                               <button
                                 onClick={() => handleOpenWizard(jc.job_card_no)}
-                                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold shadow-sm transition"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-xs transition"
                                 title="Update stage"
                               >
-                                UPDATE
+                                Update
                               </button>
                               <button
                                 onClick={() => handleOpenPanelReport(jc)}
-                                className="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 px-2 py-1 rounded-lg text-[11px] transition inline-flex items-center space-x-1 font-mono"
+                                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-2 py-1 rounded-lg text-xs transition inline-flex items-center space-x-1 font-semibold"
                                 title="Print Official Panel Dossier"
                               >
-                                <Printer className="w-3 h-3 text-cyan-400" />
-                                <span>REPORT</span>
+                                <Printer className="w-3 h-3 text-slate-500" />
+                                <span>Report</span>
                               </button>
                               <button
                                 onClick={() => handleOpenSticker(jc)}
-                                className="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-cyan-400 border border-slate-700 px-2 py-1 rounded-lg text-[11px] transition"
+                                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-2 py-1 rounded-lg text-xs transition"
                                 title="View & Print QR Sticker"
                               >
                                 <QrCode className="w-3.5 h-3.5 inline" />
@@ -951,7 +952,7 @@ export default function HomePage() {
                                 href={`/track/${jc.job_card_no}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-cyan-400 border border-slate-700 px-2 py-1 rounded-lg text-[11px] transition inline-block"
+                                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-2 py-1 rounded-lg text-xs transition inline-block"
                                 title="Open Live Tracking URL"
                               >
                                 <ExternalLink className="w-3.5 h-3.5 inline" />

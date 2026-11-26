@@ -190,102 +190,54 @@
   animation: electric-spark 1s ease-in-out infinite;
 }
 
-/* Cyber & Futuristic Industrial UI Utilities */
-.cyber-grid-bg {
-  background-color: #050811;
-  background-image: 
-    linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* Professional Enterprise Light UI Utilities */
+.pro-subtle-pattern {
+  background-color: #f8fafc;
+  background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
-.cyber-card {
-  background: rgba(13, 21, 38, 0.85);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(6, 182, 212, 0.25);
-  box-shadow: 0 0 35px rgba(6, 182, 212, 0.08), inset 0 0 20px rgba(6, 182, 212, 0.03);
+.pro-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
 }
 
-.cyber-card-active {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(6, 182, 212, 0.6);
-  box-shadow: 0 0 30px rgba(6, 182, 212, 0.25), inset 0 0 15px rgba(6, 182, 212, 0.1);
+.pro-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cyber-btn-cyan {
-  background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
-  transition: all 0.2s ease;
+.pro-card-hover:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
 }
 
-.cyber-btn-cyan:hover {
-  background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%);
-  box-shadow: 0 0 30px rgba(6, 182, 212, 0.65);
-}
-
-.cyber-input {
-  background: rgba(10, 16, 29, 0.9);
-  border: 1px solid rgba(51, 65, 85, 0.8);
-  color: #f1f5f9;
-  transition: all 0.2s ease;
-}
-
-.cyber-input:focus {
-  border-color: #06b6d4;
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.35);
-  outline: none;
-}
-
-/* Custom Cyber Scrollbars */
+/* Clean Professional Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #070b14;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 9999px;
-  border: 1px solid rgba(6, 182, 212, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #06b6d4;
-  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  background: #94a3b8;
 }
 
-.cyber-panel-glow {
-  box-shadow: 0 0 25px rgba(6, 182, 212, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+/* Backward-compatible cyber utility fallbacks */
+.cyber-grid-bg {
+  background-color: #f8fafc;
 }
 
-.cyber-hud-corner {
-  position: relative;
-}
-
-.cyber-hud-corner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  border-top: 2px solid #06b6d4;
-  border-left: 2px solid #06b6d4;
-  pointer-events: none;
-}
-
-.cyber-hud-corner::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 8px;
-  height: 8px;
-  border-bottom: 2px solid #06b6d4;
-  border-right: 2px solid #06b6d4;
-  pointer-events: none;
+.cyber-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }

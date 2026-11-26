@@ -26,12 +26,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full bg-[#050811] text-slate-100">
+    <html lang="en" className="h-full bg-[#f8fafc] text-slate-900">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className="min-h-full flex flex-col antialiased text-slate-100 font-sans bg-[#050811] selection:bg-cyan-500 selection:text-white">
+      <body className="min-h-full flex flex-col antialiased text-slate-800 font-sans bg-[#f8fafc] selection:bg-blue-600 selection:text-white">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

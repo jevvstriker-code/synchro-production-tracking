@@ -381,34 +381,34 @@ export function AdminPortalView() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Top Banner */}
-      <div className="cyber-card rounded-2xl p-4 sm:p-5 shadow-xl border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Top Banner matching reference image media_1795681443609_b2bacabc.png */}
+      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3.5">
-          <div className="p-2.5 bg-cyan-950/80 text-cyan-400 rounded-xl border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shadow-xs">
             <Settings className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-base sm:text-lg font-extrabold text-white leading-tight font-mono tracking-wide">
-                Enterprise Admin Command Console
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                Enterprise Admin Portal
               </h2>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/40 font-bold">
-                ROOT PRIVILEGES
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold">
+                Manager Access
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
-              Operator PIN security, immutable audit logs, line allocations &amp; timestamp telemetry overrides
+            <p className="text-xs text-slate-500 mt-0.5">
+              Manage Fitter &amp; Supervisor credentials, access PINs, tamper-evident audit logs &amp; timestamp overrides
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Opening & Welcome Animations Toggle Switch */}
-          <div className="flex items-center space-x-2 bg-slate-950/80 border border-cyan-500/30 rounded-xl px-2.5 py-1.5 shadow-sm">
-            <Sparkles className={`w-4 h-4 ${animationsEnabled ? 'text-cyan-400 animate-spin' : 'text-slate-500'}`} />
+          <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-xs">
+            <Sparkles className={`w-4 h-4 ${animationsEnabled ? 'text-amber-500' : 'text-slate-400'}`} />
             <div className="flex flex-col text-left">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">Animation FX</span>
-              <span className="text-[11px] font-bold text-cyan-300 font-mono">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Animation FX</span>
+              <span className="text-[11px] font-bold text-slate-700">
                 {animationsEnabled ? 'ON' : 'OFF'}
               </span>
             </div>
@@ -421,7 +421,7 @@ export function AdminPortalView() {
                 setTimeout(() => setActionStatusMsg(null), 3500);
               }}
               className={`ml-1 relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                animationsEnabled ? 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.6)]' : 'bg-slate-700'
+                animationsEnabled ? 'bg-blue-600' : 'bg-slate-300'
               }`}
               title="Toggle splash intro and welcome celebration quotes"
             >
@@ -435,7 +435,7 @@ export function AdminPortalView() {
 
           <button
             onClick={loadData}
-            className="p-2 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition"
+            className="p-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 shadow-xs transition"
             title="Refresh Admin Data"
           >
             <RefreshCw className="w-4 h-4" />
@@ -445,37 +445,37 @@ export function AdminPortalView() {
               setImportExportTab('export');
               setIsImportExportModalOpen(true);
             }}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold font-mono shadow-[0_0_15px_rgba(99,102,241,0.3)] transition flex items-center space-x-1.5 border border-indigo-400/40"
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5 border border-indigo-200"
             title="Backup and JSON Import/Export"
           >
             <FileJson className="w-4 h-4" />
-            <span>JSON BACKUP / RESTORE</span>
+            <span>JSON Backup / Restore</span>
           </button>
           <button
             onClick={handleOpenAddUser}
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold font-mono shadow-[0_0_15px_rgba(6,182,212,0.3)] transition flex items-center space-x-1.5 border border-cyan-400/40"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition flex items-center space-x-1.5"
           >
             <UserPlus className="w-4 h-4" />
-            <span>ADD STAFF ACCOUNT</span>
+            <span>Add Staff Account</span>
           </button>
         </div>
       </div>
 
       {actionStatusMsg && (
-        <div className="bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 px-4 py-3 rounded-2xl text-xs font-semibold font-mono flex items-center space-x-2 shadow-lg animate-in fade-in">
-          <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-xs animate-in fade-in">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{actionStatusMsg}</span>
         </div>
       )}
 
-      {/* Admin Tab Selector */}
-      <div className="flex flex-wrap gap-2 border-b border-cyan-500/20 pb-2">
+      {/* Admin Tab Selector matching reference image pills */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveAdminTab('users')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'users'
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -483,28 +483,28 @@ export function AdminPortalView() {
         </button>
         <button
           onClick={() => setActiveAdminTab('approvals')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'approvals'
-              ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)] border border-amber-400/50'
+              ? 'bg-blue-600 text-white shadow-xs'
               : approvalRequests.filter((r) => r.status === 'pending').length > 0
-              ? 'bg-amber-950/80 text-amber-300 border border-amber-500/50 font-bold'
-              : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+              ? 'bg-amber-50 text-amber-800 border border-amber-300 font-bold'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
           <CheckSquare className="w-4 h-4" />
           <span>Manager Approvals Queue</span>
           {approvalRequests.filter((r) => r.status === 'pending').length > 0 && (
-            <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold font-mono shadow-[0_0_8px_rgba(239,68,68,0.8)]">
+            <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
               {approvalRequests.filter((r) => r.status === 'pending').length}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveAdminTab('lines')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'lines'
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
           <Factory className="w-4 h-4" />
@@ -512,10 +512,10 @@ export function AdminPortalView() {
         </button>
         <button
           onClick={() => setActiveAdminTab('timestamps')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'timestamps'
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
           <Clock className="w-4 h-4" />
@@ -523,10 +523,10 @@ export function AdminPortalView() {
         </button>
         <button
           onClick={() => setActiveAdminTab('audit')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'audit'
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
@@ -534,21 +534,21 @@ export function AdminPortalView() {
         </button>
         <button
           onClick={() => setActiveAdminTab('backup')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'backup'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)] border border-indigo-400/50'
-              : 'bg-indigo-950/60 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-900/60'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
-          <HardDriveDownload className="w-4 h-4 text-indigo-400" />
+          <HardDriveDownload className="w-4 h-4" />
           <span>Backup &amp; Restore (JSON)</span>
         </button>
         <button
           onClick={() => setActiveAdminTab('system')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
             activeAdminTab === 'system'
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50'
-              : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
           }`}
         >
           <Database className="w-4 h-4" />
@@ -558,140 +558,102 @@ export function AdminPortalView() {
 
       {/* Tab 1: Staff User Management */}
       {activeAdminTab === 'users' && (
-        <div className="cyber-card rounded-2xl p-4 sm:p-5 shadow-xl border border-cyan-500/25 space-y-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/90 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h3 className="font-bold text-sm text-white font-mono tracking-wide">
+            <h3 className="font-bold text-sm sm:text-base text-slate-900">
               Active Fitters, Supervisors &amp; PPC Directory
             </h3>
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-cyan-400/60 absolute left-3 top-2.5" />
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search by name, role or username..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="cyber-input w-full rounded-xl pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                className="w-full rounded-xl pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 text-slate-800 focus:outline-none transition"
               />
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-slate-800 rounded-xl">
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left border-collapse min-w-[700px] text-xs">
               <thead>
-                <tr className="bg-slate-950 text-cyan-400 uppercase font-mono text-[10px] tracking-wider border-b border-cyan-500/20">
+                <tr className="bg-slate-50 text-slate-500 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200">
                   <th className="py-3 px-4">Full Name</th>
                   <th className="py-3 px-4">Username</th>
-                  <th className="py-3 px-4">Role &amp; Dept</th>
-                  <th className="py-3 px-4">Mobile PIN</th>
-                  <th className="py-3 px-4">Manager Approval Rule</th>
-                  <th className="py-3 px-4">Allowed Views</th>
+                  <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4">Mobile Quick PIN</th>
+                  <th className="py-3 px-4">Phone No</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-slate-300">
+              <tbody className="divide-y divide-slate-100 text-slate-700">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-6 text-slate-400 font-mono">Loading telemetry accounts...</td>
+                    <td colSpan={7} className="text-center py-6 text-slate-500">Loading accounts...</td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-6 text-slate-400 font-mono">No staff accounts match search.</td>
+                    <td colSpan={7} className="text-center py-6 text-slate-500">No staff accounts match search.</td>
                   </tr>
                 ) : (
                   filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-cyan-950/20 transition">
-                      <td className="py-3 px-4 font-bold text-white">{u.full_name}</td>
-                      <td className="py-3 px-4 font-mono text-cyan-400">@{u.username}</td>
-                      <td className="py-3 px-4">
+                    <tr key={u.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">{u.full_name}</td>
+                      <td className="py-3.5 px-4 text-slate-500 font-medium">@{u.username}</td>
+                      <td className="py-3.5 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider block w-fit border ${
-                            u.role === 'developer'
-                              ? 'bg-purple-950/80 text-purple-300 border-purple-500/40'
-                              : u.role === 'admin'
-                              ? 'bg-purple-950/80 text-purple-300 border-purple-500/40'
+                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider inline-block border ${
+                            u.role === 'developer' || u.role === 'admin'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200'
                               : u.role === 'qc_inspector'
-                              ? 'bg-indigo-950/80 text-indigo-300 border-indigo-500/40'
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
                               : u.role === 'dashboard_viewer'
-                              ? 'bg-teal-950/80 text-teal-300 border-teal-500/40'
+                              ? 'bg-teal-50 text-teal-700 border-teal-200'
                               : u.role === 'supervisor'
-                              ? 'bg-blue-950/80 text-blue-300 border-blue-500/40'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
                               : u.role === 'fitter'
-                              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
-                              : 'bg-amber-950/80 text-amber-300 border-amber-500/40'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
                           {u.role.replace(/_/g, ' ')}
                         </span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">{u.department || 'Production'}</span>
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold">
-                        <span className="px-2 py-0.5 rounded bg-slate-900 text-cyan-300 border border-cyan-500/30">
-                          {u.pin_code}
-                        </span>
+                      <td className="py-3.5 px-4 font-mono font-semibold text-slate-800">
+                        {u.pin_code}
                       </td>
-                      <td className="py-3 px-4">
-                        {u.role === 'admin' || u.role === 'developer' ? (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 text-[10px] font-mono font-bold border border-purple-500/40">
-                            <ShieldCheck className="w-3 h-3 text-purple-400" />
-                            <span>{u.role === 'developer' ? 'Developer Master' : 'Admin Manager'}</span>
-                          </span>
-                        ) : u.permissions?.requires_admin_approval !== false ? (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/40">
-                            <ShieldAlert className="w-3 h-3 text-amber-400" />
-                            <span>Requires Admin Approval</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 text-[10px] font-mono font-bold border border-emerald-500/40">
-                            <Check className="w-3 h-3 text-emerald-400" />
-                            <span>Direct Access</span>
-                          </span>
-                        )}
+                      <td className="py-3.5 px-4 text-slate-500">
+                        {u.phone || '—'}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1 max-w-xs font-mono">
-                          {u.role === 'admin' ? (
-                            <span className="bg-cyan-950 text-cyan-300 border border-cyan-500/30 text-[9px] px-1.5 py-0.5 rounded font-semibold">ALL FULL ACCESS</span>
-                          ) : (
-                            ['dashboard', 'job_cards', 'assembly_lines', 'rework', 'reports', 'team_performance', 'audit_trail'].map(vKey => {
-                              const isPermitted = u.permissions ? (u.permissions as any)[`view_${vKey}`] : false;
-                              if (!isPermitted) return null;
-                              return (
-                                <span key={vKey} className="bg-slate-900 text-slate-300 border border-slate-700 text-[9px] px-1.5 py-0.5 rounded font-medium">
-                                  {vKey.replace('_', ' ')}
-                                </span>
-                              );
-                            })
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <button
                           onClick={() => handleToggleUserActive(u.id, u.is_active)}
-                          className="flex items-center space-x-1 font-mono font-semibold"
+                          className="flex items-center space-x-1 font-semibold"
                         >
                           {u.is_active ? (
-                            <span className="text-emerald-400 flex items-center">
+                            <span className="text-emerald-600 flex items-center">
                               <CheckCircle className="w-3.5 h-3.5 mr-1" /> Active
                             </span>
                           ) : (
-                            <span className="text-red-400 flex items-center">
+                            <span className="text-red-500 flex items-center">
                               <XCircle className="w-3.5 h-3.5 mr-1" /> Inactive
                             </span>
                           )}
                         </button>
                       </td>
-                      <td className="py-3 px-4 text-right space-x-1">
+                      <td className="py-3.5 px-4 text-right space-x-1.5">
                         <button
                           onClick={() => handleOpenEditUser(u)}
-                          className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition"
+                          className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition"
                           title="Edit User & Permissions"
                         >
                           <Edit className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteUser(u.id, u.username)}
-                          className="p-1.5 hover:bg-red-950/60 rounded text-slate-500 hover:text-red-400 transition"
+                          className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition"
                           title="Delete User"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

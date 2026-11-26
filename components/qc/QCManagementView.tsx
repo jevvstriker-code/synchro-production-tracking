@@ -104,49 +104,42 @@ export function QCManagementView() {
     loadData();
   }, [loadData]);
 
-  // Set default employee name from current user
+  // Set default inspector name from logged-in user
   useEffect(() => {
     if (currentUser?.full_name && !employeeName) {
       setEmployeeName(currentUser.full_name);
     }
+    if (currentUser?.department) {
+      setDepartment(currentUser.department);
+    }
   }, [currentUser, employeeName]);
 
-  // Handle Doughnut Chart Slice Click
-  const handleSelectDefectProcess = (stageName: string) => {
-    if (!metrics) return;
-    const matchedReworks: any[] = [];
-    metrics.logs.forEach((l) => {
-      (l.reworks || []).forEach((rw) => {
-        if (rw.stage === stageName || (!rw.stage && stageName === 'General')) {
-          matchedReworks.push({
-            ...rw,
-            issue_date: rw.issue_date || l.entry_date,
-          });
-        }
-      });
-    });
-    setDrilldownTitle(`Defect Drilldown: ${stageName}`);
+  // Drilldown Triggers
+  const handleSelectDefectProcess = (processName: string) => {
+    const matched = allRegisters.reworks.filter((r) => r.stage?.toLowerCase() === processName.toLowerCase());
+    setDrilldownTitle(`Defect Root Cause Investigation: ${processName}`);
     setDrilldownType('rework');
-    setDrilldownItems(matchedReworks);
+    setDrilldownItems(matched);
     setIsDrilldownOpen(true);
   };
 
-  // Handle Bar Chart Bar Click
   const handleSelectStageBar = (stageLabel: string) => {
-    if (!metrics) return;
-    const cleanStage = stageLabel.replace(' (Acc)', '').replace(' (Rej/Rew)', '');
-    const matchedQC: any[] = [];
-    metrics.logs.forEach((l) => {
-      (l.qc_records || []).forEach((q) => {
-        if (q.stage === cleanStage || q.stage === stageLabel) {
-          matchedQC.push(q);
-        }
-      });
-    });
-    setDrilldownTitle(`QC Inspections: ${stageLabel}`);
+    const rawStage = stageLabel.replace(' (Acc)', '').replace(' (Rej/Rew)', '');
+    const matched = allRegisters.qcRecords.filter((q) => q.stage?.toLowerCase() === rawStage.toLowerCase());
+    setDrilldownTitle(`Inspection Items in Stage: ${rawStage}`);
     setDrilldownType('qc');
-    setDrilldownItems(matchedQC);
+    setDrilldownItems(matched);
     setIsDrilldownOpen(true);
+  };
+
+  // Toggle Verification status for defects
+  const handleToggleVerification = async (reworkId: string, currentStatus: string) => {
+    try {
+      await qcService.toggleReworkVerification(reworkId, currentStatus as VerificationStatus);
+      await loadData();
+    } catch (e) {
+      console.error('Failed to update defect verification', e);
+    }
   };
 
   // Shop Floor: Save Stage Item
@@ -251,20 +244,6 @@ export function QCManagementView() {
     }
   };
 
-  // Toggle Rework Verification (1-Click OK / Pending)
-  const handleToggleVerification = async (reworkId: string, currentStatus: VerificationStatus) => {
-    try {
-      const newStatus = await qcService.toggleReworkVerification(reworkId, currentStatus);
-      setAllRegisters((prev) => ({
-        ...prev,
-        reworks: prev.reworks.map((rw) => (rw.id === reworkId ? { ...rw, verification_status: newStatus } : rw)),
-      }));
-      await loadData();
-    } catch (e) {
-      console.error('Error toggling rework verification', e);
-    }
-  };
-
   // Filtered registers
   const filteredQCRecords = allRegisters.qcRecords.filter((q) => {
     const matchSearch =
@@ -293,21 +272,21 @@ export function QCManagementView() {
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 animate-in fade-in">
       {/* Top Header Bar */}
-      <div className="cyber-card rounded-3xl p-5 sm:p-6 shadow-xl border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.4)] border border-indigo-400/40 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-xs shrink-0">
             <Microscope className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-lg sm:text-xl font-black text-white tracking-wide font-mono">
-                Quality Control (QC) &amp; Testing Management
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+                Quality Control &amp; Testing Management
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-indigo-950 text-indigo-300 border border-indigo-500/40">
-                LIVE POSTGRES SYNC
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                PostgreSQL Synced
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Shop floor quality inspection, defect rectification registers &amp; in-process panel testing
             </p>
           </div>
@@ -316,7 +295,7 @@ export function QCManagementView() {
         <div className="flex items-center space-x-2">
           <button
             onClick={loadData}
-            className="p-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition"
+            className="p-2.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 shadow-xs transition"
             title="Refresh QC Metrics"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -327,23 +306,23 @@ export function QCManagementView() {
               setStagedItems([]);
               setActiveTab('shop-floor');
             }}
-            className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold font-mono shadow-md transition flex items-center space-x-1.5 border border-indigo-400/40"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5"
           >
             <Plus className="w-4 h-4" />
-            <span>NEW SHOP FLOOR QC</span>
+            <span>New Shop Floor QC</span>
           </button>
         </div>
       </div>
 
       {/* QC Sub-Navigation Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-500/20 pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-2">
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
               activeTab === 'dashboard'
-                ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md border border-indigo-400/50'
-                : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border border-slate-800'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
             }`}
           >
             <Microscope className="w-4 h-4" />
@@ -352,16 +331,16 @@ export function QCManagementView() {
 
           <button
             onClick={() => setActiveTab('shop-floor')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
               activeTab === 'shop-floor'
-                ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md border border-indigo-400/50'
-                : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border border-slate-800'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
             }`}
           >
             <ClipboardList className="w-4 h-4" />
             <span>Shop Floor Entry</span>
             {stagedItems.length > 0 && (
-              <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+              <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                 {stagedItems.length}
               </span>
             )}
@@ -369,10 +348,10 @@ export function QCManagementView() {
 
           <button
             onClick={() => setActiveTab('registers')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
               activeTab === 'registers'
-                ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md border border-indigo-400/50'
-                : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border border-slate-800'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -381,10 +360,10 @@ export function QCManagementView() {
 
           <button
             onClick={() => setActiveTab('reports')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center space-x-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
               activeTab === 'reports'
-                ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md border border-indigo-400/50'
-                : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border border-slate-800'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
             }`}
           >
             <Printer className="w-4 h-4" />
@@ -392,16 +371,16 @@ export function QCManagementView() {
           </button>
         </div>
 
-        {/* Global Date Filter Controls (Required by User: 7 days, 30 days, 90 days, custom date range) */}
+        {/* Global Date Filter Controls */}
         {activeTab === 'dashboard' && (
-          <div className="flex items-center space-x-1.5 bg-slate-950/80 p-1 rounded-2xl border border-slate-800 text-xs font-mono">
+          <div className="flex items-center space-x-1.5 bg-white p-1 rounded-2xl border border-slate-200 text-xs shadow-2xs">
             <button
               onClick={() => {
                 setIsCustomDate(false);
                 setPeriod('today');
               }}
               className={`px-2.5 py-1 rounded-xl font-semibold transition ${
-                !isCustomDate && period === 'today' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                !isCustomDate && period === 'today' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Today
@@ -412,7 +391,7 @@ export function QCManagementView() {
                 setPeriod('7d');
               }}
               className={`px-2.5 py-1 rounded-xl font-semibold transition ${
-                !isCustomDate && period === '7d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                !isCustomDate && period === '7d' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               7 Days
@@ -423,7 +402,7 @@ export function QCManagementView() {
                 setPeriod('30d');
               }}
               className={`px-2.5 py-1 rounded-xl font-semibold transition ${
-                !isCustomDate && period === '30d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                !isCustomDate && period === '30d' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               30 Days
@@ -434,7 +413,7 @@ export function QCManagementView() {
                 setPeriod('90d');
               }}
               className={`px-2.5 py-1 rounded-xl font-semibold transition ${
-                !isCustomDate && period === '90d' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                !isCustomDate && period === '90d' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               90 Days
@@ -442,7 +421,7 @@ export function QCManagementView() {
             <button
               onClick={() => setIsCustomDate(!isCustomDate)}
               className={`px-2.5 py-1 rounded-xl font-semibold transition flex items-center space-x-1 ${
-                isCustomDate ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                isCustomDate ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
@@ -454,32 +433,32 @@ export function QCManagementView() {
 
       {/* Custom Date Range Bar */}
       {activeTab === 'dashboard' && isCustomDate && (
-        <div className="bg-slate-950/80 border border-indigo-500/30 p-3 rounded-2xl flex flex-wrap items-center gap-3 text-xs font-mono animate-in fade-in">
-          <span className="font-bold text-indigo-300 flex items-center space-x-1.5">
-            <Filter className="w-4 h-4 text-indigo-400" />
+        <div className="bg-white border border-slate-200 p-3 rounded-2xl flex flex-wrap items-center gap-3 text-xs shadow-xs animate-in fade-in">
+          <span className="font-bold text-slate-700 flex items-center space-x-1.5">
+            <Filter className="w-4 h-4 text-blue-600" />
             <span>Select Specific Inspection Range:</span>
           </span>
           <div className="flex items-center space-x-2">
-            <label className="text-slate-400 font-medium">From:</label>
+            <label className="text-slate-500 font-medium">From:</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="cyber-input rounded-xl px-2.5 py-1 text-xs text-white"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-800"
             />
           </div>
           <div className="flex items-center space-x-2">
-            <label className="text-slate-400 font-medium">To:</label>
+            <label className="text-slate-500 font-medium">To:</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="cyber-input rounded-xl px-2.5 py-1 text-xs text-white"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-800"
             />
           </div>
           <button
             onClick={loadData}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl font-bold shadow-sm transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl font-semibold shadow-xs transition"
           >
             Apply Filter
           </button>
@@ -517,13 +496,13 @@ export function QCManagementView() {
           </div>
 
           {/* Recent QC Inspection Logs */}
-          <div className="cyber-card rounded-3xl shadow-xl border border-indigo-500/25 overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
               <div>
-                <h3 className="font-bold text-white text-sm sm:text-base font-mono">QC Inspection Log History</h3>
-                <p className="text-xs text-slate-400 font-mono">All registered shop floor quality inspection dossiers</p>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">QC Inspection Log History</h3>
+                <p className="text-xs text-slate-500">All registered shop floor quality inspection dossiers</p>
               </div>
-              <span className="text-xs text-cyan-300 font-mono font-semibold bg-slate-900 border border-cyan-500/30 px-3 py-1 rounded-xl">
+              <span className="text-xs text-slate-600 font-semibold bg-white border border-slate-200 px-3 py-1 rounded-xl shadow-2xs">
                 Showing {metrics?.logs.length || 0} Logs
               </span>
             </div>
@@ -531,7 +510,7 @@ export function QCManagementView() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-950 text-indigo-400 text-[10px] font-mono font-bold uppercase tracking-wider border-b border-indigo-500/20">
+                  <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                     <th className="p-3.5">Log Date</th>
                     <th className="p-3.5">Type</th>
                     <th className="p-3.5">Inspector</th>
@@ -540,10 +519,10 @@ export function QCManagementView() {
                     <th className="p-3.5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {!metrics || metrics.logs.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-slate-400 font-mono">
+                      <td colSpan={6} className="p-8 text-center text-slate-500">
                         No inspection logs recorded for this period.
                       </td>
                     </tr>
@@ -553,40 +532,40 @@ export function QCManagementView() {
                       const defectQty = (log.reworks || []).reduce((acc, r) => acc + (r.qty || 1), 0);
 
                       return (
-                        <tr key={log.id} className="hover:bg-indigo-950/20 transition">
-                          <td className="p-3.5 font-semibold text-white whitespace-nowrap font-mono">
+                        <tr key={log.id} className="hover:bg-slate-50/70 transition">
+                          <td className="p-3.5 font-semibold text-slate-900 whitespace-nowrap">
                             {log.entry_date}
                           </td>
-                          <td className="p-3.5 font-mono">
+                          <td className="p-3.5">
                             <span
                               className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                                 log.is_weekly
-                                  ? 'bg-indigo-950 text-indigo-300 border-indigo-500/40'
-                                  : 'bg-cyan-950 text-cyan-300 border-cyan-500/40'
+                                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                  : 'bg-blue-50 text-blue-700 border-blue-200'
                               }`}
                             >
                               {log.is_weekly ? 'Weekly Summary' : 'Daily Floor Log'}
                             </span>
                           </td>
                           <td className="p-3.5">
-                            <span className="font-semibold text-slate-200">{log.employee_name}</span>
-                            <span className="text-[10px] text-slate-400 block font-mono">{log.department}</span>
+                            <span className="font-semibold text-slate-800">{log.employee_name}</span>
+                            <span className="text-[10px] text-slate-400 block">{log.department}</span>
                           </td>
-                          <td className="p-3.5 font-semibold text-cyan-400 font-mono">
+                          <td className="p-3.5 font-semibold text-blue-600">
                             {totalQty} Panels / Items
                           </td>
-                          <td className="p-3.5 font-mono">
+                          <td className="p-3.5">
                             <span
                               className={`px-2 py-0.5 rounded-full font-bold text-[10px] border ${
                                 defectQty > 0
-                                  ? 'bg-rose-950 text-rose-300 border-rose-500/40'
-                                  : 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               }`}
                             >
                               {defectQty} Defects
                             </span>
                           </td>
-                          <td className="p-3.5 text-right space-x-2 font-mono">
+                          <td className="p-3.5 text-right space-x-2">
                             <button
                               onClick={() => {
                                 setDrilldownTitle(`Log: ${log.entry_date} by ${log.employee_name}`);
@@ -594,9 +573,9 @@ export function QCManagementView() {
                                 setDrilldownItems(log.qc_records || []);
                                 setIsDrilldownOpen(true);
                               }}
-                              className="px-2.5 py-1 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/40 rounded-lg font-semibold transition"
+                              className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg font-semibold transition"
                             >
-                              VIEW ITEMS
+                              View Items
                             </button>
                             {(isAdmin || isDeveloper) && (
                               <button
@@ -606,7 +585,7 @@ export function QCManagementView() {
                                     loadData();
                                   }
                                 }}
-                                className="p-1 hover:bg-rose-950/60 text-slate-500 hover:text-rose-400 rounded transition"
+                                className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition"
                                 title="Delete Log"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -626,73 +605,73 @@ export function QCManagementView() {
 
       {/* ================= VIEW 2: SHOP FLOOR ENTRY ================= */}
       {activeTab === 'shop-floor' && (
-        <div className="cyber-card rounded-3xl p-5 sm:p-6 border border-indigo-500/25 shadow-xl space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
             <div>
-              <h3 className="font-bold text-white text-base font-mono">Shop Floor QC Logging Console</h3>
-              <p className="text-xs text-slate-400 font-mono">Record incoming, in-process, or final panel inspections</p>
+              <h3 className="font-bold text-slate-900 text-base">Shop Floor QC Logging Console</h3>
+              <p className="text-xs text-slate-500">Record incoming, in-process, or final panel inspections</p>
             </div>
             <button
               onClick={() => {
                 setEditingItem(null);
                 setIsWizardOpen(true);
               }}
-              className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold font-mono shadow-md transition flex items-center space-x-1.5 self-start sm:self-auto border border-indigo-400/40"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-1.5 self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
-              <span>ADD INSPECTION ITEM</span>
+              <span>Add Inspection Item</span>
             </button>
           </div>
 
           {saveStatusMsg && (
             <div
-              className={`p-3 rounded-2xl text-xs font-semibold font-mono flex items-center space-x-2 ${
+              className={`p-3 rounded-2xl text-xs font-semibold flex items-center space-x-2 ${
                 saveStatusMsg.type === 'success'
-                  ? 'bg-emerald-950/80 border border-emerald-500/40 text-emerald-300'
-                  : 'bg-rose-950/80 border border-rose-500/40 text-rose-300'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                  : 'bg-rose-50 border border-rose-200 text-rose-800'
               }`}
             >
               {saveStatusMsg.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
               )}
               <span>{saveStatusMsg.text}</span>
             </div>
           )}
 
           {/* Header Metadata Inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-950/80 p-4 rounded-2xl border border-slate-800 font-mono">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Inspection Date *</label>
+              <label className="block font-semibold text-slate-700 mb-1">Inspection Date *</label>
               <input
                 type="date"
                 required
                 value={entryDate}
                 onChange={(e) => setEntryDate(e.target.value)}
-                className="cyber-input w-full rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Inspector Full Name *</label>
+              <label className="block font-semibold text-slate-700 mb-1">Inspector Full Name *</label>
               <input
                 type="text"
                 required
                 value={employeeName}
                 onChange={(e) => setEmployeeName(e.target.value)}
                 placeholder="e.g. Dipen Malli"
-                className="cyber-input w-full rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Department</label>
+              <label className="block font-semibold text-slate-700 mb-1">Department</label>
               <input
                 type="text"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="cyber-input w-full rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -700,18 +679,18 @@ export function QCManagementView() {
           {/* Staged QC Items Table */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-cyan-400 font-mono">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
                 Inspected Items Queue ({stagedItems.length})
               </h4>
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-[11px] text-slate-500">
                 Click item to edit before final submission
               </span>
             </div>
 
-            <div className="border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-950 text-indigo-400 text-[10px] font-mono font-bold uppercase tracking-wider border-b border-indigo-500/20">
+                  <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                     <th className="p-3">Stage</th>
                     <th className="p-3">Item / Panel</th>
                     <th className="p-3">Serial / JC #</th>
@@ -721,49 +700,49 @@ export function QCManagementView() {
                     <th className="p-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {stagedItems.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-400 font-mono">
-                        No inspection items added yet. Click &quot;ADD INSPECTION ITEM&quot; to begin.
+                      <td colSpan={7} className="p-8 text-center text-slate-500">
+                        No inspection items added yet. Click &quot;Add Inspection Item&quot; to begin.
                       </td>
                     </tr>
                   ) : (
                     stagedItems.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-indigo-950/20 transition">
-                        <td className="p-3 font-semibold text-slate-200">{item.stage}</td>
-                        <td className="p-3 font-semibold text-white">{item.item_name}</td>
-                        <td className="p-3 font-mono text-cyan-400">{item.serial_no || '-'}</td>
-                        <td className="p-3 text-slate-300">{item.client || '-'}</td>
-                        <td className="p-3 font-bold text-white font-mono">{item.qty}</td>
-                        <td className="p-3 font-mono">
+                      <tr key={idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 font-semibold text-slate-800">{item.stage}</td>
+                        <td className="p-3 font-semibold text-slate-900">{item.item_name}</td>
+                        <td className="p-3 font-mono text-blue-600">{item.serial_no || '-'}</td>
+                        <td className="p-3 text-slate-600">{item.client || '-'}</td>
+                        <td className="p-3 font-bold text-slate-900">{item.qty}</td>
+                        <td className="p-3">
                           <span
                             className={`px-2 py-0.5 rounded-full font-bold text-[10px] border ${
                               item.status === 'Accepted'
-                                ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : item.status === 'Rework'
-                                ? 'bg-amber-950 text-amber-300 border-amber-500/40'
-                                : 'bg-rose-950 text-rose-300 border-rose-500/40'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
                             }`}
                           >
                             {item.status}
                           </span>
                         </td>
-                        <td className="p-3 text-right space-x-1 font-mono">
+                        <td className="p-3 text-right space-x-1">
                           <button
                             type="button"
                             onClick={() => {
                               setEditingItem(item);
                               setIsWizardOpen(true);
                             }}
-                            className="p-1 text-slate-400 hover:text-cyan-400 rounded"
+                            className="p-1 text-slate-400 hover:text-blue-600 rounded"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteStagedItem(item.id)}
-                            className="p-1 text-slate-500 hover:text-rose-400 rounded"
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -777,15 +756,15 @@ export function QCManagementView() {
           </div>
 
           {/* Submit Action */}
-          <div className="flex justify-end pt-3 border-t border-slate-800 font-mono">
+          <div className="flex justify-end pt-3 border-t border-slate-200">
             <button
               type="button"
               disabled={isSavingLog || stagedItems.length === 0}
               onClick={handleSaveCompleteLog}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition flex items-center space-x-2 border border-emerald-400/40"
+              className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-xs transition flex items-center space-x-2"
             >
               <Check className="w-4 h-4" />
-              <span>{isSavingLog ? 'SAVING LOG TO DATABASE...' : 'COMMIT & SAVE FLOOR QC LOG'}</span>
+              <span>{isSavingLog ? 'Saving Log to Database...' : 'Commit & Save Floor QC Log'}</span>
             </button>
           </div>
         </div>
@@ -793,15 +772,15 @@ export function QCManagementView() {
 
       {/* ================= VIEW 3: REGISTERS ================= */}
       {activeTab === 'registers' && (
-        <div className="cyber-card rounded-3xl p-5 sm:p-6 border border-indigo-500/25 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 font-mono">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div className="flex space-x-2">
               <button
                 onClick={() => setRegisterSubTab('qc')}
-                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition border ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition border ${
                   registerSubTab === 'qc'
-                    ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md border-indigo-400/50'
-                    : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border-slate-800'
+                    ? 'bg-blue-600 text-white shadow-xs border-blue-600'
+                    : 'bg-white text-slate-600 hover:text-slate-900 border-slate-200'
                 }`}
               >
                 Master QC Register ({filteredQCRecords.length})
@@ -809,10 +788,10 @@ export function QCManagementView() {
 
               <button
                 onClick={() => setRegisterSubTab('defects')}
-                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition border ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition border ${
                   registerSubTab === 'defects'
-                    ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md border-rose-400/50'
-                    : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border-slate-800'
+                    ? 'bg-rose-600 text-white shadow-xs border-rose-600'
+                    : 'bg-white text-slate-600 hover:text-slate-900 border-slate-200'
                 }`}
               >
                 Defect Monitoring Register ({filteredReworks.length})
@@ -821,23 +800,23 @@ export function QCManagementView() {
 
             {/* Search Box */}
             <div className="relative min-w-[240px]">
-              <Search className="w-4 h-4 text-cyan-400/60 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search panel, serial, client..."
                 value={registerSearch}
                 onChange={(e) => setRegisterSearch(e.target.value)}
-                className="cyber-input w-full pl-9 pr-3 py-1.5 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Sub-Tab A: Master QC Register */}
           {registerSubTab === 'qc' && (
-            <div className="border border-slate-800 rounded-2xl overflow-x-auto">
+            <div className="border border-slate-200 rounded-xl overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-950 text-indigo-400 text-[10px] font-mono font-bold uppercase tracking-wider border-b border-indigo-500/20">
+                  <tr className="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
                     <th className="p-3">Log Date</th>
                     <th className="p-3">Stage</th>
                     <th className="p-3">Item / Panel</th>
@@ -849,31 +828,31 @@ export function QCManagementView() {
                     <th className="p-3">Inspector</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filteredQCRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="p-8 text-center text-slate-400 font-mono">
+                      <td colSpan={9} className="p-8 text-center text-slate-500">
                         No records match the active criteria.
                       </td>
                     </tr>
                   ) : (
                     filteredQCRecords.map((q, idx) => (
-                      <tr key={idx} className="hover:bg-indigo-950/20 transition">
-                        <td className="p-3 whitespace-nowrap font-mono">{q.log_date}</td>
-                        <td className="p-3 font-semibold text-slate-200">{q.stage}</td>
-                        <td className="p-3 font-bold text-white">{q.item_name}</td>
-                        <td className="p-3 font-mono text-cyan-400">{q.serial_no || '-'}</td>
-                        <td className="p-3 text-slate-300">{q.client || '-'}</td>
-                        <td className="p-3 text-slate-300">{q.team_vendor || '-'}</td>
-                        <td className="p-3 font-bold text-white font-mono">{q.qty}</td>
-                        <td className="p-3 font-mono">
+                      <tr key={idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 whitespace-nowrap">{q.log_date}</td>
+                        <td className="p-3 font-semibold text-slate-800">{q.stage}</td>
+                        <td className="p-3 font-bold text-slate-900">{q.item_name}</td>
+                        <td className="p-3 font-mono text-blue-600">{q.serial_no || '-'}</td>
+                        <td className="p-3 text-slate-600">{q.client || '-'}</td>
+                        <td className="p-3 text-slate-600">{q.team_vendor || '-'}</td>
+                        <td className="p-3 font-bold text-slate-900">{q.qty}</td>
+                        <td className="p-3">
                           <span
                             className={`px-2 py-0.5 rounded-full font-bold text-[10px] border ${
                               q.status === 'Accepted'
-                                ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : q.status === 'Rework'
-                                ? 'bg-amber-950 text-amber-300 border-amber-500/40'
-                                : 'bg-rose-950 text-rose-300 border-rose-500/40'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
                             }`}
                           >
                             {q.status}
@@ -890,10 +869,10 @@ export function QCManagementView() {
 
           {/* Sub-Tab B: Defect Monitoring Register */}
           {registerSubTab === 'defects' && (
-            <div className="border border-slate-800 rounded-2xl overflow-x-auto">
+            <div className="border border-slate-200 rounded-xl overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-950 text-rose-400 text-[10px] font-mono font-bold uppercase tracking-wider border-b border-rose-500/20">
+                  <tr className="bg-slate-50 text-rose-600 text-[11px] font-bold uppercase tracking-wider border-b border-rose-100">
                     <th className="p-3">Issue Date</th>
                     <th className="p-3">Item / Panel</th>
                     <th className="p-3">Stage</th>
@@ -903,38 +882,38 @@ export function QCManagementView() {
                     <th className="p-3 text-center">Verification Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filteredReworks.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-400 font-mono">
+                      <td colSpan={7} className="p-8 text-center text-slate-500">
                         No defects found.
                       </td>
                     </tr>
                   ) : (
                     filteredReworks.map((r, idx) => (
-                      <tr key={idx} className="hover:bg-rose-950/20 transition">
-                        <td className="p-3 whitespace-nowrap font-mono">{r.issue_date}</td>
-                        <td className="p-3 font-bold text-white">{r.item_name}</td>
-                        <td className="p-3 font-semibold text-slate-200">{r.stage}</td>
+                      <tr key={idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 whitespace-nowrap">{r.issue_date}</td>
+                        <td className="p-3 font-bold text-slate-900">{r.item_name}</td>
+                        <td className="p-3 font-semibold text-slate-800">{r.stage}</td>
                         <td className="p-3">
-                          <p className="font-semibold text-rose-400">{r.reason}</p>
-                          {r.root_cause && <p className="text-[10px] text-slate-400 font-mono">Root Cause: {r.root_cause}</p>}
+                          <p className="font-semibold text-rose-600">{r.reason}</p>
+                          {r.root_cause && <p className="text-[10px] text-slate-500">Root Cause: {r.root_cause}</p>}
                         </td>
                         <td className="p-3">
-                          <p className="text-slate-300">{r.action_taken || '-'}</p>
+                          <p className="text-slate-700">{r.action_taken || '-'}</p>
                           {r.corrective_action && (
-                            <p className="text-[10px] text-emerald-400 font-mono">Corrective: {r.corrective_action}</p>
+                            <p className="text-[10px] text-emerald-600">Corrective: {r.corrective_action}</p>
                           )}
                         </td>
-                        <td className="p-3 font-bold text-white font-mono">{r.qty}</td>
-                        <td className="p-3 text-center font-mono">
+                        <td className="p-3 font-bold text-slate-900">{r.qty}</td>
+                        <td className="p-3 text-center">
                           <button
                             type="button"
                             onClick={() => handleToggleVerification(r.id, r.verification_status)}
-                            className={`px-3 py-1 rounded-full font-bold text-[10px] transition shadow-sm border ${
+                            className={`px-3 py-1 rounded-full font-bold text-[10px] transition shadow-xs border ${
                               r.verification_status === 'OK'
-                                ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900'
-                                : 'bg-amber-950 text-amber-300 border-amber-500/40 hover:bg-amber-900'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
                             }`}
                             title="Click to toggle status"
                           >
@@ -953,30 +932,30 @@ export function QCManagementView() {
 
       {/* ================= VIEW 4: A4 QUALITY DOSSIER ================= */}
       {activeTab === 'reports' && (
-        <div className="cyber-card rounded-3xl p-6 sm:p-8 border border-indigo-500/25 shadow-xl space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800 print:hidden font-mono">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200 print:hidden">
             <div>
-              <h3 className="font-bold text-white text-base">A4 Quality Inspection Dossier</h3>
-              <p className="text-xs text-slate-400">Official printable quality control certificate &amp; report</p>
+              <h3 className="font-bold text-slate-900 text-base">A4 Quality Inspection Dossier</h3>
+              <p className="text-xs text-slate-500">Official printable quality control certificate &amp; report</p>
             </div>
             <button
               onClick={() => window.print()}
-              className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center space-x-1.5 transition border border-indigo-400/40"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition"
             >
               <Printer className="w-4 h-4" />
-              <span>PRINT A4 DOSSIER</span>
+              <span>Print A4 Dossier</span>
             </button>
           </div>
 
           {/* Printable Sheet */}
-          <div className="bg-white text-slate-900 border border-slate-300 rounded-2xl p-6 space-y-6 font-sans">
+          <div className="bg-white text-slate-900 border border-slate-200 rounded-2xl p-6 space-y-6 font-sans shadow-xs">
             <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4">
               <div>
                 <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">
                   Synchro Electricals Pvt. Ltd.
                 </h1>
                 <p className="text-xs text-slate-600">
-                  Industrial Panel Manufacturing & Quality Assurance Laboratory
+                  Industrial Panel Manufacturing &amp; Quality Assurance Laboratory
                 </p>
                 <p className="text-[10px] text-slate-400">
                   Document: SEPL-QC-DOSSIER-2026 | Generated: {new Date().toLocaleDateString()}
@@ -1004,8 +983,8 @@ export function QCManagementView() {
                 <span className="text-base font-black text-rose-600">{metrics?.totalDefects || 0}</span>
               </div>
               <div>
-                <span className="text-slate-400 text-[10px] uppercase font-bold block">Rectified & Closed</span>
-                <span className="text-base font-black text-indigo-600">{metrics?.verifiedOKCount || 0}</span>
+                <span className="text-slate-400 text-[10px] uppercase font-bold block">Rectified &amp; Closed</span>
+                <span className="text-base font-black text-blue-600">{metrics?.verifiedOKCount || 0}</span>
               </div>
             </div>
 
@@ -1030,7 +1009,7 @@ export function QCManagementView() {
                     <tr key={i}>
                       <td className="p-2 font-semibold">{r.stage}</td>
                       <td className="p-2">{r.item_name}</td>
-                      <td className="p-2 font-mono">{r.serial_no || '-'}</td>
+                      <td className="p-2 font-mono text-blue-600">{r.serial_no || '-'}</td>
                       <td className="p-2">{r.client || '-'}</td>
                       <td className="p-2 font-bold">{r.status}</td>
                       <td className="p-2">{r.employee_name}</td>
