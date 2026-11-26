@@ -28,9 +28,9 @@ interface NavbarProps {
 }
 
 export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal, openImportExportModal }: NavbarProps) {
-  const { currentUser, isLoggedIn, logout } = useAuth();
+  const { currentUser, isLoggedIn, logout, isAdmin, canView } = useAuth();
 
-  const navItems = [
+  const allNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'qr-generator', label: 'Job Card & QR', icon: QrCode },
     { id: 'assembly-lines', label: 'Assembly Lines', icon: Layers },
@@ -40,6 +40,12 @@ export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal, o
     { id: 'team-performance', label: 'Team Performance', icon: Users },
     { id: 'admin-portal', label: 'Admin Portal', icon: Settings },
   ];
+
+  // Filter tabs according to Admin-configured permissions
+  const navItems = allNavItems.filter((item) => {
+    if (item.id === 'admin-portal') return isAdmin;
+    return canView(item.id);
+  });
 
   return (
     <header className="bg-blue-600 text-white border-b border-blue-700 sticky top-0 z-40 shadow-md select-none print:hidden">
@@ -84,7 +90,7 @@ export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal, o
 
         {/* Quick Action / Scanner, Backup & Auth */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0">
-          {openImportExportModal && (
+          {openImportExportModal && (isAdmin || canView('backup_restore')) && (
             <button
               onClick={openImportExportModal}
               className="bg-blue-700 hover:bg-blue-800 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold border border-blue-500 shadow transition flex items-center space-x-1.5"

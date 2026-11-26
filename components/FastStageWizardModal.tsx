@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { JobCard, StageLog, PRODUCTION_STAGES, DELAY_REASONS } from '@/types';
 import { stageLogService } from '@/services/stageLogService';
 import { auditService } from '@/services/auditService';
+import { approvalService } from '@/services/approvalService';
 import { useAuth } from '@/components/AuthContext';
 import {
   X,
@@ -38,7 +39,7 @@ export function FastStageWizardModal({
   onRefresh,
   initialStageIndex = 0,
 }: FastStageWizardModalProps) {
-  const { currentUser, isAdmin, isFitter, isSupervisor } = useAuth();
+  const { currentUser, isAdmin, isFitter, isSupervisor, requiresApproval } = useAuth();
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [liveElapsed, setLiveElapsed] = useState<string>('00:00:00');
@@ -162,6 +163,50 @@ export function FastStageWizardModal({
       setStatusMessage({ text: 'Operator name is mandatory before completing stage.', type: 'error' });
       return;
     }
+
+    // Manager Approval check: Non-admins require Admin Manager authorization
+    if (requiresApproval()) {
+      setIsSubmitting(true);
+      setStatusMessage(null);
+      try {
+        await approvalService.createRequest({
+          request_type: 'stage_update',
+          job_card_no: jobCard.job_card_no,
+          panel_name: jobCard.product_name,
+          stage_name: currentStage.stage_name,
+          requester_name: currentUser?.full_name || operatorName.trim(),
+          requester_role: currentUser?.role || 'fitter',
+          requester_id: currentUser?.id,
+          action_payload: {
+            stageId: currentStage.id,
+            stageIndex: activeStepIndex,
+            status: 'completed',
+            operatorName: operatorName.trim(),
+            delayReason,
+            delayNotes,
+            endDate: new Date().toISOString().substring(0, 10),
+            endTime: new Date().toTimeString().substring(0, 8),
+            jobCardId: jobCard.id,
+          },
+        });
+
+        setStatusMessage({
+          text: `✓ Stage completion submitted for Admin Manager Approval! Changes will apply once verified.`,
+          type: 'success',
+        });
+        onRefresh();
+        setTimeout(() => {
+          onClose();
+        }, 2500);
+      } catch (err: any) {
+        console.error('Error submitting approval request', err);
+        setStatusMessage({ text: 'Error submitting stage update: ' + err.message, type: 'error' });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     setStatusMessage(null);
     try {

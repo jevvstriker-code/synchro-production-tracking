@@ -76,6 +76,52 @@ export function useAuthController() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
   }, []);
 
+  const canView = useCallback(
+    (moduleId: string): boolean => {
+      // 1. Admin always has full view access to everything
+      if (currentUser?.role === 'admin') return true;
+
+      // 2. Guest (unauthenticated) can only see public dashboard
+      if (!currentUser) {
+        return moduleId === 'dashboard';
+      }
+
+      // 3. Check granular permissions configured by Admin
+      if (currentUser.permissions) {
+        const key = `view_${moduleId.replace(/-/g, '_')}` as keyof typeof currentUser.permissions;
+        if (currentUser.permissions[key] !== undefined) {
+          return !!currentUser.permissions[key];
+        }
+      }
+
+      // 4. Default fallback matrix by role
+      switch (currentUser.role) {
+        case 'supervisor':
+          return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines', 'rework-register', 'reports'].includes(moduleId);
+        case 'ppc':
+          return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines'].includes(moduleId);
+        case 'fitter':
+          return ['assembly-lines'].includes(moduleId);
+        default:
+          return moduleId === 'dashboard';
+      }
+    },
+    [currentUser]
+  );
+
+  const requiresApproval = useCallback((): boolean => {
+    // Admin never requires approval
+    if (currentUser?.role === 'admin') return false;
+
+    // Check specific user flag if configured
+    if (currentUser?.permissions?.requires_admin_approval !== undefined) {
+      return !!currentUser.permissions.requires_admin_approval;
+    }
+
+    // By default, every non-admin action requires Admin approval
+    return true;
+  }, [currentUser]);
+
   return {
     currentUser,
     isLoading,
@@ -84,6 +130,8 @@ export function useAuthController() {
     isAdmin: currentUser?.role === 'admin',
     isSupervisor: currentUser?.role === 'supervisor' || currentUser?.role === 'admin',
     isFitter: currentUser?.role === 'fitter' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin',
+    canView,
+    requiresApproval,
     loginWithPin,
     loginWithCredentials,
     logout,

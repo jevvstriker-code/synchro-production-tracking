@@ -12,6 +12,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isSupervisor: boolean;
   isFitter: boolean;
+  canView: (module: string) => boolean;
+  requiresApproval: () => boolean;
   loginWithPin: (pin: string) => Promise<AppUser | null>;
   loginWithCredentials: (username: string, secret: string) => Promise<AppUser | null>;
   logout: () => void;

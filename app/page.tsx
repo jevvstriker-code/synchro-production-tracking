@@ -22,6 +22,7 @@ import { reworkService } from '@/services/reworkService';
 import { auditService } from '@/services/auditService';
 import { analyticsService } from '@/services/analyticsService';
 import { assemblyLineService } from '@/services/assemblyLineService';
+import { approvalService } from '@/services/approvalService';
 import { JobCard, StageLog, ReworkLog, AuditTrail, AssemblyLine, PRODUCTION_STAGES, ASSEMBLY_LINES } from '@/types';
 
 import {
@@ -50,11 +51,12 @@ import {
   Square,
   Factory,
   Zap,
-  FileJson
+  FileJson,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { currentUser, isLoggedIn, isAdmin, isSupervisor } = useAuth();
+  const { currentUser, isLoggedIn, isAdmin, isSupervisor, canView, requiresApproval } = useAuth();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -244,6 +246,44 @@ export default function HomePage() {
   // Create New Job Card
   const handleCreateJobCard = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Manager approval check: Non-admins require Admin Manager approval
+    if (requiresApproval()) {
+      try {
+        await approvalService.createRequest({
+          request_type: 'job_card_create',
+          job_card_no: formJcNo.trim(),
+          panel_name: formProductName.trim(),
+          requester_name: currentUser?.full_name || formPpcName,
+          requester_role: currentUser?.role || 'ppc',
+          requester_id: currentUser?.id,
+          action_payload: {
+            job_card_no: formJcNo.trim(),
+            customer_code: formCustCode.trim(),
+            date: formDate,
+            lot_qty: Number(formLotQty) || 1,
+            product_name: formProductName.trim(),
+            panel_type: formPanelType,
+            assembly_line: formLine,
+            current_stage: PRODUCTION_STAGES[0].name,
+            current_stage_idx: 0,
+            status: 'in_progress',
+            production_start_date: formStartDate,
+            production_end_date: formEndDate || null,
+            ppc_name: formPpcName.trim(),
+            supervisor_name: formSupName.trim(),
+          },
+        });
+
+        alert(`✓ Job Card "${formJcNo.trim()}" submitted for Admin Manager Approval! Changes will launch once approved in the Admin Portal.`);
+        setFormJcNo(`SE26090${Math.floor(400 + Math.random() * 100)}`);
+        await loadAllData();
+      } catch (err: any) {
+        alert(`Error submitting job card: ${err.message}`);
+      }
+      return;
+    }
+
     try {
       const newCard = await jobCardService.createJobCard({
         job_card_no: formJcNo.trim(),
@@ -280,8 +320,8 @@ export default function HomePage() {
 
   // Delete Job Card
   const handleDeleteJobCard = async (card: JobCard) => {
-    if (!isAdmin && !isSupervisor) {
-      setIsLoginModalOpen(true);
+    if (!isAdmin) {
+      alert('Only the System Administrator is authorized to delete production records.');
       return;
     }
     if (confirm(`Delete Job Card ${card.job_card_no}? This will also delete all stage logs.`)) {
@@ -305,6 +345,38 @@ export default function HomePage() {
   const handleSaveRework = async (e: React.FormEvent) => {
     e.preventDefault();
     const jc = jobCards.find((j) => j.job_card_no === reworkFormJc);
+
+    // Manager approval check: Non-admins require Admin approval
+    if (requiresApproval()) {
+      try {
+        await approvalService.createRequest({
+          request_type: 'rework_log',
+          job_card_no: reworkFormJc,
+          panel_name: jc?.product_name || 'Electrical Panel',
+          stage_name: reworkFormProcess,
+          requester_name: currentUser?.full_name || reworkFormSupervisor,
+          requester_role: currentUser?.role || 'supervisor',
+          requester_id: currentUser?.id,
+          action_payload: {
+            job_card_no: reworkFormJc,
+            product_name: jc?.product_name || 'APFC Panel',
+            assembly_line: jc?.assemblyLine || 'Assembly Line 1',
+            process_name: reworkFormProcess,
+            reason: reworkFormReason,
+            supervisor_name: reworkFormSupervisor,
+          },
+        });
+
+        alert(`✓ Rework defect submitted for Admin Manager Approval! Once approved, it will be added to the register.`);
+        setIsAddReworkModalOpen(false);
+        setReworkFormReason('');
+        await loadAllData();
+      } catch (err: any) {
+        alert(`Error submitting rework log: ${err.message}`);
+      }
+      return;
+    }
+
     try {
       await reworkService.createReworkLog({
         job_card_no: reworkFormJc,
@@ -360,6 +432,30 @@ export default function HomePage() {
 
         {/* Main Container */}
         <main className="flex-1 w-full max-w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto">
+        {!isAdmin && !canView(activeTab) ? (
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm space-y-4 my-8">
+            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200 shadow-sm">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Access Restricted</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              You do not have permission to view the <strong className="text-slate-800 capitalize">{activeTab.replace('-', ' ')}</strong> module. Access permissions are strictly managed by the System Administrator in the Enterprise Admin Portal.
+            </p>
+            {!isLoggedIn ? (
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow transition"
+              >
+                Staff Login
+              </button>
+            ) : (
+              <div className="text-[11px] text-slate-400">
+                Logged in as <span className="font-semibold text-slate-600">{currentUser?.full_name}</span> ({currentUser?.role})
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
         {/* ================= TAB 1: DASHBOARD ================= */}
         {activeTab === 'dashboard' && (
           <section className="space-y-4 sm:space-y-6">
@@ -1442,6 +1538,8 @@ export default function HomePage() {
 
         {/* ================= TAB 8: ADMIN PORTAL ================= */}
         {activeTab === 'admin-portal' && <AdminPortalView />}
+          </>
+        )}
       </main>
       </div>
 

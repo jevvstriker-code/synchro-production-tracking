@@ -6,8 +6,9 @@ import { userService } from '@/services/userService';
 import { auditService } from '@/services/auditService';
 import { jobCardService } from '@/services/jobCardService';
 import { stageLogService } from '@/services/stageLogService';
-import { AppUser, UserRole, AuditTrail, JobCard, StageLog, AssemblyLine, PRODUCTION_STAGES } from '@/types';
+import { AppUser, UserRole, AuditTrail, JobCard, StageLog, AssemblyLine, PRODUCTION_STAGES, ApprovalRequest, UserPermissions } from '@/types';
 import { assemblyLineService } from '@/services/assemblyLineService';
+import { approvalService } from '@/services/approvalService';
 import { AddAssemblyLineModal } from '@/components/AddAssemblyLineModal';
 import { ImportExportModal } from '@/components/ImportExportModal';
 import {
@@ -35,7 +36,12 @@ import {
   Download,
   Upload,
   HardDriveDownload,
-  HardDriveUpload
+  HardDriveUpload,
+  CheckSquare,
+  ShieldAlert,
+  Sliders,
+  Check,
+  Eye
 } from 'lucide-react';
 
 export function AdminPortalView() {
@@ -46,7 +52,10 @@ export function AdminPortalView() {
   const [assemblyLines, setAssemblyLines] = useState<AssemblyLine[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userSearch, setUserSearch] = useState<string>('');
-  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'lines' | 'audit' | 'timestamps' | 'system' | 'backup'>('users');
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'approvals' | 'lines' | 'audit' | 'timestamps' | 'system' | 'backup'>('users');
+  const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
+  const [approvalsFilter, setApprovalsFilter] = useState<'pending' | 'all'>('pending');
+  const [actionStatusMsg, setActionStatusMsg] = useState<string | null>(null);
   const [isAddLineModalOpen, setIsAddLineModalOpen] = useState<boolean>(false);
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState<boolean>(false);
   const [importExportTab, setImportExportTab] = useState<'export' | 'import'>('export');
@@ -60,6 +69,16 @@ export function AdminPortalView() {
   const [formPin, setFormPin] = useState<string>('');
   const [formPassword, setFormPassword] = useState<string>('');
   const [formPhone, setFormPhone] = useState<string>('');
+  const [formPermissions, setFormPermissions] = useState<UserPermissions>({
+    view_dashboard: true,
+    view_job_cards: true,
+    view_assembly_lines: true,
+    view_audit_trail: false,
+    view_rework: true,
+    view_reports: false,
+    view_team_performance: false,
+    requires_admin_approval: true,
+  });
   const [formMsg, setFormMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Timestamp Override Console state
@@ -82,16 +101,18 @@ export function AdminPortalView() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [uList, aLogs, jcList, linesList] = await Promise.all([
+      const [uList, aLogs, jcList, linesList, reqList] = await Promise.all([
         userService.getAllUsers(),
         auditService.getAuditLogs(100),
         jobCardService.getAllJobCards(),
         assemblyLineService.getAll(),
+        approvalService.getAllRequests(100),
       ]);
       setUsers(uList);
       setAuditLogs(aLogs);
       setJobCards(jcList);
       setAssemblyLines(linesList);
+      setApprovalRequests(reqList);
       if (jcList.length > 0 && !selectedJcNo) {
         handleSelectJobCardForTimestamps(jcList[0].job_card_no);
       }
@@ -169,6 +190,31 @@ export function AdminPortalView() {
     }
   };
 
+  const handleApproveRequest = async (reqId: string) => {
+    try {
+      await approvalService.approveRequest(reqId, currentUser?.full_name || 'Admin Manager');
+      setActionStatusMsg('✓ Change request approved and successfully applied to shop floor!');
+      await loadData();
+      setTimeout(() => setActionStatusMsg(null), 3500);
+    } catch (err: any) {
+      console.error('Failed to approve request', err);
+      alert('Error approving request: ' + err.message);
+    }
+  };
+
+  const handleRejectRequest = async (reqId: string) => {
+    const reason = prompt('Optional reason for rejecting this change:');
+    try {
+      await approvalService.rejectRequest(reqId, currentUser?.full_name || 'Admin Manager', reason || 'Declined by Admin Manager');
+      setActionStatusMsg('Change request declined.');
+      await loadData();
+      setTimeout(() => setActionStatusMsg(null), 3500);
+    } catch (err: any) {
+      console.error('Failed to reject request', err);
+      alert('Error rejecting request: ' + err.message);
+    }
+  };
+
   const handleOpenAddUser = () => {
     setEditingUserId(null);
     setFormFullName('');
@@ -177,6 +223,16 @@ export function AdminPortalView() {
     setFormPin(String(Math.floor(1000 + Math.random() * 9000)));
     setFormPassword('');
     setFormPhone('');
+    setFormPermissions({
+      view_dashboard: true,
+      view_job_cards: true,
+      view_assembly_lines: true,
+      view_audit_trail: false,
+      view_rework: true,
+      view_reports: false,
+      view_team_performance: false,
+      requires_admin_approval: true,
+    });
     setFormMsg(null);
     setIsUserModalOpen(true);
   };
@@ -189,6 +245,18 @@ export function AdminPortalView() {
     setFormPin(user.pin_code);
     setFormPassword('');
     setFormPhone(user.phone || '');
+    setFormPermissions(
+      user.permissions || {
+        view_dashboard: true,
+        view_job_cards: true,
+        view_assembly_lines: true,
+        view_audit_trail: user.role === 'admin',
+        view_rework: true,
+        view_reports: user.role === 'admin',
+        view_team_performance: user.role === 'admin',
+        requires_admin_approval: user.role !== 'admin',
+      }
+    );
     setFormMsg(null);
     setIsUserModalOpen(true);
   };
@@ -208,17 +276,18 @@ export function AdminPortalView() {
           role: formRole,
           pin_code: formPin.trim(),
           phone: formPhone.trim() || undefined,
+          permissions: formPermissions,
         });
 
         await auditService.logAudit({
           job_card_no: 'SYSTEM',
-          action: `Admin Updated User: ${formUsername}`,
+          action: `Admin Updated User & Permissions: ${formUsername}`,
           actor_name: currentUser?.full_name || 'Admin',
           actor_role: 'admin',
-          details: `Role: ${formRole} | PIN: ${formPin}`,
+          details: `Role: ${formRole} | Requires Approval: ${formPermissions.requires_admin_approval}`,
         });
 
-        setFormMsg({ text: 'User successfully updated!', type: 'success' });
+        setFormMsg({ text: 'User & Permissions successfully updated!', type: 'success' });
       } else {
         await userService.createUser({
           full_name: formFullName.trim(),
@@ -227,6 +296,7 @@ export function AdminPortalView() {
           pin_code: formPin.trim(),
           password: formPassword.trim() || formPin.trim(),
           phone: formPhone.trim() || undefined,
+          permissions: formPermissions,
         });
 
         await auditService.logAudit({
@@ -340,6 +410,13 @@ export function AdminPortalView() {
         </div>
       </div>
 
+      {actionStatusMsg && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-sm animate-in fade-in">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{actionStatusMsg}</span>
+        </div>
+      )}
+
       {/* Admin Tab Selector */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         <button
@@ -352,6 +429,24 @@ export function AdminPortalView() {
         >
           <Users className="w-4 h-4" />
           <span>Staff Accounts ({users.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminTab('approvals')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
+            activeAdminTab === 'approvals'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : approvalRequests.filter((r) => r.status === 'pending').length > 0
+              ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          <CheckSquare className="w-4 h-4" />
+          <span>Manager Approvals Queue</span>
+          {approvalRequests.filter((r) => r.status === 'pending').length > 0 && (
+            <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold font-mono">
+              {approvalRequests.filter((r) => r.status === 'pending').length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveAdminTab('lines')}
@@ -437,7 +532,8 @@ export function AdminPortalView() {
                   <th className="py-3 px-4">Username</th>
                   <th className="py-3 px-4">Role</th>
                   <th className="py-3 px-4">Mobile Quick PIN</th>
-                  <th className="py-3 px-4">Phone No</th>
+                  <th className="py-3 px-4">Manager Approval Rule</th>
+                  <th className="py-3 px-4">Allowed Views</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
@@ -445,11 +541,11 @@ export function AdminPortalView() {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-slate-400">Loading accounts...</td>
+                    <td colSpan={8} className="text-center py-6 text-slate-400">Loading accounts...</td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-slate-400">No staff accounts match search.</td>
+                    <td colSpan={8} className="text-center py-6 text-slate-400">No staff accounts match search.</td>
                   </tr>
                 ) : (
                   filteredUsers.map((u) => (
@@ -474,7 +570,41 @@ export function AdminPortalView() {
                       <td className="py-3 px-4 font-mono font-bold text-blue-700">
                         {u.pin_code}
                       </td>
-                      <td className="py-3 px-4 text-slate-500">{u.phone || 'â€”'}</td>
+                      <td className="py-3 px-4">
+                        {u.role === 'admin' ? (
+                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
+                            <ShieldCheck className="w-3 h-3 text-purple-600" />
+                            <span>Admin Manager</span>
+                          </span>
+                        ) : u.permissions?.requires_admin_approval !== false ? (
+                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-200">
+                            <ShieldAlert className="w-3 h-3 text-amber-600" />
+                            <span>Requires Admin Approval</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>Direct Access</span>
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {u.role === 'admin' ? (
+                            <span className="bg-slate-100 text-slate-700 text-[9px] px-1.5 py-0.5 rounded font-mono font-semibold">ALL FULL ACCESS</span>
+                          ) : (
+                            ['dashboard', 'job_cards', 'assembly_lines', 'rework', 'reports', 'team_performance', 'audit_trail'].map(vKey => {
+                              const isPermitted = u.permissions ? (u.permissions as any)[`view_${vKey}`] : false;
+                              if (!isPermitted) return null;
+                              return (
+                                <span key={vKey} className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] px-1.5 py-0.5 rounded font-medium">
+                                  {vKey.replace('_', ' ')}
+                                </span>
+                              );
+                            })
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-4">
                         <button
                           onClick={() => handleToggleUserActive(u.id, u.is_active)}
@@ -495,7 +625,7 @@ export function AdminPortalView() {
                         <button
                           onClick={() => handleOpenEditUser(u)}
                           className="p-1.5 hover:bg-slate-100 rounded text-slate-600 hover:text-blue-600 transition"
-                          title="Edit User"
+                          title="Edit User & Permissions"
                         >
                           <Edit className="w-3.5 h-3.5" />
                         </button>
@@ -513,6 +643,183 @@ export function AdminPortalView() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Manager Approvals Queue */}
+      {activeAdminTab === 'approvals' && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="font-bold text-sm text-slate-900 flex items-center space-x-2">
+                <CheckSquare className="w-4 h-4 text-amber-600" />
+                <span>Shop Floor Manager Approvals Queue</span>
+                {approvalRequests.filter((r) => r.status === 'pending').length > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {approvalRequests.filter((r) => r.status === 'pending').length} Pending
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-slate-500">
+                Review and approve stage completions, job card creations, and rework incidents submitted by fitters and supervisors.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setApprovalsFilter('pending')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                  approvalsFilter === 'pending'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Pending Requests ({approvalRequests.filter((r) => r.status === 'pending').length})
+              </button>
+              <button
+                onClick={() => setApprovalsFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                  approvalsFilter === 'all'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                All History ({approvalRequests.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Requests List */}
+          {(() => {
+            const filteredRequests = approvalRequests.filter((r) =>
+              approvalsFilter === 'pending' ? r.status === 'pending' : true
+            );
+
+            if (filteredRequests.length === 0) {
+              return (
+                <div className="py-12 text-center space-y-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-800">
+                    {approvalsFilter === 'pending'
+                      ? 'All Caught Up! No Pending Approvals'
+                      : 'No Approval Requests Found'}
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    When operators or supervisors submit stage updates or new job cards, they will appear here for Admin Manager sign-off.
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {filteredRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className={`border rounded-2xl p-4 sm:p-5 transition shadow-sm ${
+                      req.status === 'pending'
+                        ? 'bg-amber-50/40 border-amber-300'
+                        : req.status === 'approved'
+                        ? 'bg-emerald-50/20 border-emerald-200'
+                        : 'bg-slate-50 border-slate-200 opacity-70'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/60">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            req.request_type === 'stage_update'
+                              ? 'bg-blue-100 text-blue-800'
+                              : req.request_type === 'job_card_create'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {req.request_type.replace('_', ' ')}
+                        </span>
+                        <span className="font-mono font-bold text-xs text-blue-700">
+                          {req.job_card_no}
+                        </span>
+                        {req.panel_name && (
+                          <span className="text-xs font-semibold text-slate-800">
+                            • {req.panel_name}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            req.status === 'pending'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : req.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {req.status}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono">
+                          {req.created_at ? new Date(req.created_at).toLocaleString() : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="py-3 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-700">
+                      <div>
+                        <span className="text-slate-400 font-semibold block text-[11px]">Submitted By:</span>
+                        <span className="font-bold text-slate-900">{req.requester_name}</span>{' '}
+                        <span className="capitalize text-slate-500">({req.requester_role})</span>
+                      </div>
+
+                      <div>
+                        <span className="text-slate-400 font-semibold block text-[11px]">Details / Stage:</span>
+                        <span className="font-medium text-slate-800">
+                          {req.stage_name || req.request_type}
+                        </span>
+                        {req.action_payload?.operatorName && (
+                          <span className="text-slate-500 block text-[11px]">
+                            Operator: {req.action_payload.operatorName} | Delay: {req.action_payload.delayReason || 'None'}
+                          </span>
+                        )}
+                        {req.action_payload?.reason && (
+                          <span className="text-slate-500 block text-[11px]">
+                            Rework Reason: {req.action_payload.reason}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {req.status === 'pending' ? (
+                      <div className="flex items-center justify-end space-x-2.5 pt-2 border-t border-slate-200/60">
+                        <button
+                          onClick={() => handleRejectRequest(req.id)}
+                          className="px-3.5 py-1.5 bg-white border border-red-300 hover:bg-red-50 text-red-700 rounded-xl text-xs font-semibold transition"
+                        >
+                          ✕ Decline
+                        </button>
+                        <button
+                          onClick={() => handleApproveRequest(req.id)}
+                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition flex items-center space-x-1"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Approve & Apply to Floor</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="pt-2 border-t border-slate-200/60 text-[11px] text-slate-500 flex items-center justify-between">
+                        <span>
+                          Reviewed by <strong>{req.reviewed_by}</strong> ({req.admin_notes || 'Approved'})
+                        </span>
+                        <span>{req.reviewed_at ? new Date(req.reviewed_at).toLocaleDateString() : ''}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1087,13 +1394,80 @@ export function AdminPortalView() {
                   </label>
                   <input
                     type="password"
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder="••••••••"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               )}
+
+              {/* Manager Access & Permissions Control */}
+              <div className="pt-3 border-t border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                    <Sliders className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Manager Access & Permissions Control</span>
+                  </span>
+                  <span className="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full font-bold">
+                    Admin Manager
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5">
+                  <label className="flex items-start space-x-2 cursor-pointer bg-amber-50/80 p-2 rounded-lg border border-amber-200">
+                    <input
+                      type="checkbox"
+                      checked={formPermissions.requires_admin_approval}
+                      onChange={(e) =>
+                        setFormPermissions({
+                          ...formPermissions,
+                          requires_admin_approval: e.target.checked,
+                        })
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <div>
+                      <span className="font-bold text-xs text-amber-950">
+                        Require Admin Approval For All Updates
+                      </span>
+                      <p className="text-[10px] text-amber-800">
+                        When enabled, any stage completions or changes by this person go to Admin Manager approval queue first.
+                      </p>
+                    </div>
+                  </label>
+
+                  <div className="text-[11px] font-semibold text-slate-700 pt-1">
+                    Allowed View Sections:
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {[
+                      { key: 'view_dashboard', label: 'Dashboard & Analytics' },
+                      { key: 'view_job_cards', label: 'Job Cards & QR' },
+                      { key: 'view_assembly_lines', label: 'Assembly Lines' },
+                      { key: 'view_rework', label: 'Rework Register' },
+                      { key: 'view_reports', label: 'Production Reports' },
+                      { key: 'view_team_performance', label: 'Team Performance' },
+                      { key: 'view_audit_trail', label: 'Audit Trail' },
+                    ].map((item) => (
+                      <label key={item.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!formPermissions[item.key as keyof UserPermissions]}
+                          onChange={(e) =>
+                            setFormPermissions({
+                              ...formPermissions,
+                              [item.key]: e.target.checked,
+                            })
+                          }
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-slate-700">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
               <div className="flex justify-end space-x-2 pt-3 border-t border-slate-200">
                 <button

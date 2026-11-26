@@ -1,5 +1,21 @@
 export type UserRole = 'admin' | 'supervisor' | 'fitter' | 'ppc';
 
+export interface UserPermissions {
+  view_dashboard: boolean;
+  view_job_cards: boolean;
+  view_assembly_lines: boolean;
+  view_audit_trail: boolean;
+  view_rework: boolean;
+  view_reports: boolean;
+  view_team_performance: boolean;
+  view_backup_restore?: boolean;
+  view_admin_portal?: boolean;
+  can_create_job_cards?: boolean;
+  can_update_stages?: boolean;
+  can_log_rework?: boolean;
+  requires_admin_approval?: boolean;
+}
+
 export interface AppUser {
   id: string;
   username: string;
@@ -8,6 +24,28 @@ export interface AppUser {
   pin_code: string;
   phone?: string;
   is_active: boolean;
+  permissions?: UserPermissions;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type ApprovalRequestStatus = 'pending' | 'approved' | 'rejected';
+export type ApprovalRequestType = 'stage_update' | 'job_card_create' | 'rework_log' | 'panel_assign';
+
+export interface ApprovalRequest {
+  id: string;
+  request_type: ApprovalRequestType;
+  job_card_no: string;
+  panel_name?: string;
+  stage_name?: string;
+  requester_name: string;
+  requester_role: string;
+  requester_id?: string;
+  action_payload: any;
+  status: ApprovalRequestStatus;
+  admin_notes?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
   created_at?: string;
   updated_at?: string;
 }
