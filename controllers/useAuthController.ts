@@ -6,48 +6,59 @@ import { userService } from '@/services/userService';
 
 const AUTH_STORAGE_KEY = 'synchro_production_auth_user';
 const PORTAL_MODE_KEY = 'synchro_portal_mode';
+const ANIMATION_STORAGE_KEY = 'synchro_enable_animations';
+
+export const PRODUCTION_PUNS = [
+  "Let's build with precision! Spark the line, tighten the busbars, and keep the current flowing!",
+  "Turning raw sheet metal and copper into engineering masterpieces — one panel at a time!",
+  "Built tough, wired right, energized to perfection. Let's make today's production legendary!",
+  "Current flows where focus goes — let's power up the assembly lines!",
+  "High voltage enthusiasm, zero resistance teamwork!"
+];
+
+export const QC_PUNS = [
+  "Let's check every millimeter! Catching defects today so our customers catch pure excellence tomorrow.",
+  "In God we trust; everything else, we test, measure, and verify!",
+  "Zero defects isn't just a goal — it's the only standard we ship!",
+  "QC motto: If it's not documented and verified, it didn't pass inspection!",
+  "We don't find faults to blame, we find them to build unmatched quality!"
+];
+
+export const DEV_PUNS = [
+  "Master Developer override engaged. Building high-voltage systems and fault-tolerant architecture!",
+  "System running at peak frequency — zero downtime, maximum throughput!"
+];
 
 export function useAuthController() {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [portalMode, setPortalModeState] = useState<'production' | 'qc'>('production');
+  const [animationsEnabled, setAnimationsEnabledState] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [welcomeBanner, setWelcomeBanner] = useState<string | null>(null);
+  const [welcomeModalData, setWelcomeModalData] = useState<{
+    user: AppUser;
+    mode: 'production' | 'qc';
+    quote: string;
+  } | null>(null);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      // Do not automate login on app open - always require login when app reopens
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+
       const storedMode = localStorage.getItem(PORTAL_MODE_KEY) as 'production' | 'qc' | null;
       if (storedMode) {
         setPortalModeState(storedMode);
       }
 
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setCurrentUser(parsed);
-
-        // Auto-route to QC if role is QC
-        if (parsed.role === 'qc_inspector' || parsed.role === 'dashboard_viewer') {
-          setPortalModeState('qc');
-        }
-
-        // Refresh fresh permissions and profile from Supabase in background
-        if (parsed?.id) {
-          userService.getUserById(parsed.id).then((fresh) => {
-            if (fresh && fresh.is_active) {
-              setCurrentUser(fresh);
-              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(fresh));
-            } else if (fresh && !fresh.is_active) {
-              setCurrentUser(null);
-              localStorage.removeItem(AUTH_STORAGE_KEY);
-            }
-          }).catch((err) => {
-            console.warn('Could not refresh user permissions in background', err);
-          });
-        }
+      const storedAnim = localStorage.getItem(ANIMATION_STORAGE_KEY);
+      if (storedAnim !== null) {
+        setAnimationsEnabledState(storedAnim === 'true');
       }
     } catch (e) {
-      console.error('Failed to parse auth user from storage', e);
+      console.error('Failed to init auth controller', e);
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +73,25 @@ export function useAuthController() {
     }
   }, []);
 
+  const setAnimationsEnabled = useCallback((enabled: boolean) => {
+    setAnimationsEnabledState(enabled);
+    try {
+      localStorage.setItem(ANIMATION_STORAGE_KEY, enabled ? 'true' : 'false');
+    } catch (e) {
+      console.error('Failed to save animation preference', e);
+    }
+  }, []);
+
+  const getRandomQuote = (targetMode: 'production' | 'qc', role: string) => {
+    if (role === 'developer') {
+      return DEV_PUNS[Math.floor(Math.random() * DEV_PUNS.length)];
+    }
+    if (targetMode === 'qc' || role === 'qc_inspector') {
+      return QC_PUNS[Math.floor(Math.random() * QC_PUNS.length)];
+    }
+    return PRODUCTION_PUNS[Math.floor(Math.random() * PRODUCTION_PUNS.length)];
+  };
+
   const loginWithPin = useCallback(async (pin: string, requestedMode?: 'production' | 'qc'): Promise<AppUser | null> => {
     setIsLoading(true);
     setAuthError(null);
@@ -69,11 +99,15 @@ export function useAuthController() {
       const user = await userService.authenticate(pin);
       if (user) {
         setCurrentUser(user);
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
         
         // Determine portal mode
         const mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
         setPortalMode(mode);
+
+        const quote = getRandomQuote(mode, user.role);
+        if (animationsEnabled) {
+          setWelcomeModalData({ user, mode, quote });
+        }
 
         setWelcomeBanner(`Welcome, ${user.full_name}!`);
         setTimeout(() => setWelcomeBanner(null), 6000);
@@ -90,7 +124,7 @@ export function useAuthController() {
     } finally {
       setIsLoading(false);
     }
-  }, [setPortalMode]);
+  }, [setPortalMode, animationsEnabled]);
 
   const loginWithCredentials = useCallback(
     async (username: string, passwordOrPin: string, requestedMode?: 'production' | 'qc'): Promise<AppUser | null> => {
@@ -100,10 +134,14 @@ export function useAuthController() {
         const user = await userService.authenticate(username, passwordOrPin);
         if (user) {
           setCurrentUser(user);
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
           
           const mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
           setPortalMode(mode);
+
+          const quote = getRandomQuote(mode, user.role);
+          if (animationsEnabled) {
+            setWelcomeModalData({ user, mode, quote });
+          }
 
           setWelcomeBanner(`Welcome, ${user.full_name}!`);
           setTimeout(() => setWelcomeBanner(null), 6000);
@@ -121,13 +159,19 @@ export function useAuthController() {
         setIsLoading(false);
       }
     },
-    [setPortalMode]
+    [setPortalMode, animationsEnabled]
   );
 
   const logout = useCallback(() => {
     setCurrentUser(null);
     setWelcomeBanner(null);
+    setWelcomeModalData(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  }, []);
+
+  const dismissWelcomeModal = useCallback(() => {
+    setWelcomeModalData(null);
   }, []);
 
   const canView = useCallback(
@@ -186,6 +230,10 @@ export function useAuthController() {
     authError,
     welcomeBanner,
     dismissWelcomeBanner: () => setWelcomeBanner(null),
+    welcomeModalData,
+    dismissWelcomeModal,
+    animationsEnabled,
+    setAnimationsEnabled,
     portalMode,
     setPortalMode,
     isLoggedIn: !!currentUser,

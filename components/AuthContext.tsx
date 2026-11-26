@@ -10,6 +10,14 @@ interface AuthContextType {
   authError: string | null;
   welcomeBanner: string | null;
   dismissWelcomeBanner: () => void;
+  welcomeModalData: {
+    user: AppUser;
+    mode: 'production' | 'qc';
+    quote: string;
+  } | null;
+  dismissWelcomeModal: () => void;
+  animationsEnabled: boolean;
+  setAnimationsEnabled: (enabled: boolean) => void;
   portalMode: 'production' | 'qc';
   setPortalMode: (mode: 'production' | 'qc') => void;
   isLoggedIn: boolean;

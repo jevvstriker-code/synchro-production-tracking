@@ -41,11 +41,12 @@ import {
   ShieldAlert,
   Sliders,
   Check,
-  Eye
+  Eye,
+  Sparkles
 } from 'lucide-react';
 
 export function AdminPortalView() {
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser, isAdmin, animationsEnabled, setAnimationsEnabled } = useAuth();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditTrail[]>([]);
   const [jobCards, setJobCards] = useState<JobCard[]>([]);
@@ -396,7 +397,37 @@ export function AdminPortalView() {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Opening & Welcome Animations Toggle Switch */}
+          <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-xs">
+            <Sparkles className={`w-4 h-4 ${animationsEnabled ? 'text-amber-500 animate-spin' : 'text-slate-400'}`} />
+            <div className="flex flex-col text-left">
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Animation FX</span>
+              <span className="text-[11px] font-bold text-slate-800">
+                {animationsEnabled ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !animationsEnabled;
+                setAnimationsEnabled(next);
+                setActionStatusMsg(next ? '✓ System Opening & Welcome Animations Turned ON!' : '✓ Fast Floor Mode: Opening & Welcome Animations Turned OFF.');
+                setTimeout(() => setActionStatusMsg(null), 3500);
+              }}
+              className={`ml-1 relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                animationsEnabled ? 'bg-blue-600' : 'bg-slate-300'
+              }`}
+              title="Toggle splash intro and welcome celebration quotes"
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  animationsEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
           <button
             onClick={loadData}
             className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition"
@@ -1303,15 +1334,56 @@ export function AdminPortalView() {
 
       {/* Tab 4: System / Database Info */}
       {activeAdminTab === 'system' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="font-bold text-sm text-slate-900">Database & Schema Isolation Status</h3>
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2 text-xs text-blue-900">
-            <div className="font-bold">Connected PostgreSQL Engine:</div>
-            <div className="font-mono text-[11px] bg-white p-2.5 rounded-lg border border-blue-200">
-              Host: db.eicforalejjzquoucbxp.supabase.co<br />
-              Schema: synchro_production_tracking (Dedicated Schema Isolated)<br />
-              RLS: Enabled on all tables<br />
-              Tables: app_users, job_cards, stage_logs, rework_logs, audit_trail
+        <div className="space-y-4">
+          {/* Visual Animations Preference Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Application Animations & Celebration Experience</h3>
+                  <p className="text-xs text-slate-500">
+                    Control opening splash intro, celebration welcome animations, and floor quotes
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !animationsEnabled;
+                  setAnimationsEnabled(next);
+                  setActionStatusMsg(next ? '✓ System Opening & Welcome Animations Enabled!' : '✓ Fast Floor Mode: Opening & Welcome Animations Disabled.');
+                  setTimeout(() => setActionStatusMsg(null), 3500);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 ${
+                  animationsEnabled
+                    ? 'bg-emerald-600 text-white shadow-sm hover:bg-emerald-700'
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`}
+              >
+                <span>{animationsEnabled ? 'Status: ANIMATIONS ACTIVE (ON)' : 'Status: ANIMATIONS DISABLED (OFF)'}</span>
+              </button>
+            </div>
+
+            <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+              <div><strong>Animations ON:</strong> Displays the sleek opening energy splash, workspace transition, and post-login celebration docket with operator name and industrial quote.</div>
+              <div><strong>Animations OFF (Fast Mode):</strong> Bypasses all visual delays, opening directly to workspace controls for maximum efficiency on shop-floor tablets.</div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-sm text-slate-900">Database & Schema Isolation Status</h3>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2 text-xs text-blue-900">
+              <div className="font-bold">Connected PostgreSQL Engine:</div>
+              <div className="font-mono text-[11px] bg-white p-2.5 rounded-lg border border-blue-200">
+                Host: db.eicforalejjzquoucbxp.supabase.co<br />
+                Schema: synchro_production_tracking (Dedicated Schema Isolated)<br />
+                RLS: Enabled on all tables<br />
+                Tables: app_users, job_cards, stage_logs, rework_logs, audit_trail
+              </div>
             </div>
           </div>
         </div>

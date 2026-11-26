@@ -14,7 +14,9 @@ import {
   Cpu,
   Sparkles,
   Layers,
-  Search
+  Search,
+  Microscope,
+  Wrench
 } from 'lucide-react';
 
 interface LoginModalProps {
@@ -23,10 +25,11 @@ interface LoginModalProps {
   onSuccess?: () => void;
   requiredRole?: string;
   message?: string;
+  closable?: boolean;
 }
 
-export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }: LoginModalProps) {
-  const { loginWithPin, loginWithCredentials, isLoading, authError, setPortalMode } = useAuth();
+export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message, closable = true }: LoginModalProps) {
+  const { loginWithPin, loginWithCredentials, isLoading, authError } = useAuth();
   const [selectedWorkspace, setSelectedWorkspace] = useState<'production' | 'qc' | 'developer'>('production');
   const [authMode, setAuthMode] = useState<'pin' | 'credentials'>('pin');
   const [pin, setPin] = useState('');
@@ -93,10 +96,11 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
     }
   };
 
-  const handleQuickDemoLogin = async (presetPin: string, mode: 'production' | 'qc') => {
+  const handleQuickDemoLogin = async (presetPin: string, mode: 'production' | 'qc' | 'developer') => {
     setErrorMsg(null);
     setSelectedWorkspace(mode);
-    const user = await loginWithPin(presetPin, mode);
+    const targetMode = mode === 'qc' ? 'qc' : 'production';
+    const user = await loginWithPin(presetPin, targetMode);
     if (user) {
       if (onSuccess) onSuccess();
       onClose();
@@ -104,7 +108,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -113,63 +117,92 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 leading-tight">Synchro Gateway Login</h3>
-              <p className="text-[11px] text-slate-500">Choose workspace & sign in</p>
+              <h3 className="text-base font-bold text-slate-900 leading-tight">Synchro Gateway Sign-In</h3>
+              <p className="text-[11px] text-slate-500">Select your workspace mode and enter PIN</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {closable && (
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition"
+              title="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        {/* Workspace Switcher Selector */}
+        {/* User Workspace Selection: "Let's Build" vs "Let's Check" */}
         <div className="space-y-1.5">
           <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-            Select Target Workspace
+            Choose Your Workstation Context:
           </label>
-          <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+          <div className="grid grid-cols-2 gap-2">
+            {/* 1. Production Mode */}
             <button
               type="button"
               onClick={() => setSelectedWorkspace('production')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold transition flex flex-col items-center space-y-1 ${
+              className={`p-3 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 ${
                 selectedWorkspace === 'production'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-blue-50 border-blue-600 shadow-md ring-2 ring-blue-500/20'
+                  : 'bg-slate-50 border-slate-200 hover:border-slate-300'
               }`}
             >
-              <Factory className="w-4 h-4" />
-              <span>Production</span>
+              <div className="flex items-center justify-between">
+                <span className={`p-1.5 rounded-xl ${selectedWorkspace === 'production' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                  <Factory className="w-4 h-4" />
+                </span>
+                {selectedWorkspace === 'production' && (
+                  <span className="text-[9px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">ACTIVE</span>
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-900 leading-tight">🏭 Let's Build</div>
+                <div className="text-[10px] text-slate-500 font-medium">Production Floor & Lines</div>
+              </div>
             </button>
 
+            {/* 2. QC Inspection Mode */}
             <button
               type="button"
               onClick={() => setSelectedWorkspace('qc')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold transition flex flex-col items-center space-y-1 ${
+              className={`p-3 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 ${
                 selectedWorkspace === 'qc'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-cyan-50 border-cyan-600 shadow-md ring-2 ring-cyan-500/20'
+                  : 'bg-slate-50 border-slate-200 hover:border-slate-300'
               }`}
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>QC Inspection</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSelectedWorkspace('developer')}
-              className={`py-2 px-2 rounded-xl text-xs font-bold transition flex flex-col items-center space-y-1 ${
-                selectedWorkspace === 'developer'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Cpu className="w-4 h-4" />
-              <span>Developer</span>
+              <div className="flex items-center justify-between">
+                <span className={`p-1.5 rounded-xl ${selectedWorkspace === 'qc' ? 'bg-cyan-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                  <Microscope className="w-4 h-4" />
+                </span>
+                {selectedWorkspace === 'qc' && (
+                  <span className="text-[9px] font-bold bg-cyan-600 text-white px-2 py-0.5 rounded-full">ACTIVE</span>
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-900 leading-tight">🔬 Let's Check</div>
+                <div className="text-[10px] text-slate-500 font-medium">Quality Control Gate</div>
+              </div>
             </button>
           </div>
+
+          {/* Developer / Enterprise Admin Option */}
+          <button
+            type="button"
+            onClick={() => setSelectedWorkspace('developer')}
+            className={`w-full py-1.5 px-3 rounded-xl border text-xs font-semibold transition flex items-center justify-between ${
+              selectedWorkspace === 'developer'
+                ? 'bg-purple-100 border-purple-500 text-purple-900 font-bold'
+                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <span className="flex items-center space-x-1.5">
+              <Cpu className="w-3.5 h-3.5 text-purple-600" />
+              <span>🛠️ Enterprise Developer / Admin Access</span>
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">PIN 9999 / 2619</span>
+          </button>
         </div>
 
         {message && (
@@ -270,7 +303,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
               onClick={() => handlePinSubmit()}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl shadow transition"
             >
-              {isLoading ? 'Verifying PIN...' : 'Sign In with PIN'}
+              {isLoading ? 'Verifying PIN...' : `Sign In to ${selectedWorkspace === 'qc' ? "Let's Check (QC)" : "Let's Build"}`}
             </button>
           </div>
         )}
@@ -313,7 +346,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
               disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl shadow transition"
             >
-              {isLoading ? 'Authenticating...' : 'Sign In to Workspace'}
+              {isLoading ? 'Authenticating...' : `Sign In to ${selectedWorkspace === 'qc' ? "Let's Check (QC)" : "Let's Build"}`}
             </button>
           </form>
         )}
@@ -327,7 +360,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
           <div className="grid grid-cols-2 gap-1.5 text-[11px]">
             <button
               type="button"
-              onClick={() => handleQuickDemoLogin('9999', 'production')}
+              onClick={() => handleQuickDemoLogin('9999', 'developer')}
               className="p-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-xl border border-purple-200 text-left transition flex items-center justify-between"
             >
               <span className="font-semibold">Developer Master</span>
@@ -346,10 +379,10 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
             <button
               type="button"
               onClick={() => handleQuickDemoLogin('2026', 'qc')}
-              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-xl border border-indigo-200 text-left transition flex items-center justify-between"
+              className="p-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 rounded-xl border border-cyan-200 text-left transition flex items-center justify-between"
             >
               <span className="font-semibold">QC Inspector (Dipen)</span>
-              <span className="text-[9px] font-mono bg-indigo-200 px-1 rounded">2026</span>
+              <span className="text-[9px] font-mono bg-cyan-200 px-1 rounded">2026</span>
             </button>
 
             <button
@@ -383,7 +416,7 @@ export function LoginModal({ isOpen, onClose, onSuccess, requiredRole, message }
 
         {/* Footer Notice */}
         <div className="text-center text-[10px] text-slate-400 border-t border-slate-100 pt-2 font-mono">
-          Industrial Dr. Prepared this app for Synchro Electricals Pvt. Ltd.
+          Copyright © Industrial Dr. Prepared this app for Synchro Electricals Pvt. Ltd.
         </div>
       </div>
     </div>

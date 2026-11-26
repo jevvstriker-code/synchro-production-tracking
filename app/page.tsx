@@ -16,6 +16,7 @@ import { TeamPerformanceView } from '@/components/TeamPerformanceView';
 import { AdminPortalView } from '@/components/AdminPortalView';
 import { ElectricCurrentTracker } from '@/components/ElectricCurrentTracker';
 import { OpeningSplashAnimation } from '@/components/OpeningSplashAnimation';
+import { WelcomeCelebrationModal } from '@/components/WelcomeCelebrationModal';
 import { QCManagementView } from '@/components/qc/QCManagementView';
 
 import { jobCardService } from '@/services/jobCardService';
@@ -70,12 +71,24 @@ export default function HomePage() {
     requiresApproval,
     welcomeBanner,
     dismissWelcomeBanner,
+    welcomeModalData,
+    dismissWelcomeModal,
+    animationsEnabled,
     portalMode,
     setPortalMode,
   } = useAuth();
 
   // Splash Screen State
   const [showSplash, setShowSplash] = useState<boolean>(true);
+
+  // When not logged in and animations are done or disabled, ensure login gateway is open
+  useEffect(() => {
+    if (!isLoggedIn) {
+      if (!animationsEnabled || !showSplash) {
+        setIsLoginModalOpen(true);
+      }
+    }
+  }, [isLoggedIn, animationsEnabled, showSplash]);
 
   // Production Dashboard Date Filter State
   const [prodPeriod, setProdPeriod] = useState<string>('all');
@@ -460,7 +473,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col antialiased text-slate-800">
       {/* 0. Opening Splash Animation without lag */}
-      {showSplash && (
+      {animationsEnabled && showSplash && (
         <OpeningSplashAnimation
           onFinish={() => {
             setShowSplash(false);
@@ -468,6 +481,16 @@ export default function HomePage() {
               setIsLoginModalOpen(true);
             }
           }}
+        />
+      )}
+
+      {/* 0.1 Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
+      {welcomeModalData && (
+        <WelcomeCelebrationModal
+          user={welcomeModalData.user}
+          mode={welcomeModalData.mode}
+          quote={welcomeModalData.quote}
+          onFinish={dismissWelcomeModal}
         />
       )}
 
@@ -1716,11 +1739,12 @@ export default function HomePage() {
         jobCards={jobCards}
       />
 
-      {/* 4. Staff Login Modal */}
+      {/* 4. Staff Login Gateway & Modal */}
       <LoginModal
-        isOpen={isLoginModalOpen}
+        isOpen={isLoginModalOpen || !isLoggedIn}
         onClose={() => setIsLoginModalOpen(false)}
         onSuccess={loadAllData}
+        closable={isLoggedIn}
       />
 
       {/* 5. Add Rework Modal */}
