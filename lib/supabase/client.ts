@@ -14,4 +14,14 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
+export const supabaseQC = createClient(supabaseUrl, supabaseKey, {
+  db: {
+    schema: 'synchro_qc_app',
+  },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
+
 export const getBrowserSupabaseClient = () => supabase;

@@ -22,6 +22,22 @@ export const stageLogService = {
     stageIndex: number,
     operatorName: string
   ): Promise<StageLog> {
+    // Sequential stage enforcement: previous stage must be completed
+    if (stageIndex > 0) {
+      const { data: stages } = await supabase
+        .from('stage_logs')
+        .select('stage_index, status, stage_name')
+        .eq('job_card_id', jobCardId)
+        .order('stage_index', { ascending: true });
+
+      const prev = stages?.find((s) => s.stage_index === stageIndex - 1);
+      if (prev && prev.status !== 'completed') {
+        throw new Error(
+          `Sequential Stage Rule: Stage ${stageIndex} (${prev.stage_name}) must be completed before starting this stage.`
+        );
+      }
+    }
+
     const now = new Date();
     const dateStr = now.toISOString().substring(0, 10);
     const timeStr = now.toTimeString().substring(0, 8);
@@ -35,7 +51,10 @@ export const stageLogService = {
         start_time: timeStr,
         started_at: startedAt,
         operator_name: operatorName,
-        updated_at: startedAt
+        is_timer_paused: false,
+        accumulated_seconds: 0,
+        last_resumed_at: startedAt,
+        updated_at: startedAt,
       })
       .eq('id', stageId)
       .select()
@@ -54,11 +73,62 @@ export const stageLogService = {
         current_stage: stageName,
         current_stage_idx: stageIndex,
         status: 'in_progress',
-        updated_at: startedAt
+        updated_at: startedAt,
       })
       .eq('id', jobCardId);
 
     return updatedStage as StageLog;
+  },
+
+  async pauseStageTimer(stageId: string): Promise<StageLog> {
+    const now = new Date();
+    const { data: existing } = await supabase
+      .from('stage_logs')
+      .select('accumulated_seconds, last_resumed_at, is_timer_paused')
+      .eq('id', stageId)
+      .single();
+
+    let newAccumulated = existing?.accumulated_seconds || 0;
+    if (!existing?.is_timer_paused && existing?.last_resumed_at) {
+      const elapsed = Math.max(0, Math.floor((now.getTime() - new Date(existing.last_resumed_at).getTime()) / 1000));
+      newAccumulated += elapsed;
+    }
+
+    const { data: updated, error } = await supabase
+      .from('stage_logs')
+      .update({
+        is_timer_paused: true,
+        accumulated_seconds: newAccumulated,
+        last_resumed_at: null,
+        updated_at: now.toISOString(),
+      })
+      .eq('id', stageId)
+      .select()
+      .single();
+
+    if (error || !updated) {
+      throw error || new Error('Failed to pause timer');
+    }
+    return updated as StageLog;
+  },
+
+  async resumeStageTimer(stageId: string): Promise<StageLog> {
+    const now = new Date();
+    const { data: updated, error } = await supabase
+      .from('stage_logs')
+      .update({
+        is_timer_paused: false,
+        last_resumed_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      })
+      .eq('id', stageId)
+      .select()
+      .single();
+
+    if (error || !updated) {
+      throw error || new Error('Failed to resume timer');
+    }
+    return updated as StageLog;
   },
 
   async completeStage(
@@ -71,29 +141,44 @@ export const stageLogService = {
       delayNotes?: string;
     }
   ): Promise<{ updatedStage: StageLog; nextStageIndex: number; isAllComplete: boolean }> {
+    // Sequential stage enforcement: previous stage must be completed
+    if (stageIndex > 0) {
+      const { data: stages } = await supabase
+        .from('stage_logs')
+        .select('stage_index, status, stage_name')
+        .eq('job_card_id', jobCardId)
+        .order('stage_index', { ascending: true });
+
+      const prev = stages?.find((s) => s.stage_index === stageIndex - 1);
+      if (prev && prev.status !== 'completed') {
+        throw new Error(
+          `Sequential Stage Rule: Stage ${stageIndex} (${prev.stage_name}) must be completed before completing this stage.`
+        );
+      }
+    }
+
     const now = new Date();
     const dateStr = now.toISOString().substring(0, 10);
     const timeStr = now.toTimeString().substring(0, 8);
     const completedAt = now.toISOString();
 
-    // Fetch existing stage to calculate elapsed time
+    // Fetch existing stage to calculate active elapsed working time
     const { data: existing } = await supabase
       .from('stage_logs')
-      .select('started_at, start_date, start_time')
+      .select('started_at, start_date, start_time, accumulated_seconds, last_resumed_at, is_timer_paused')
       .eq('id', stageId)
       .single();
 
-    let durationHours: number = 1.0;
-    if (existing?.started_at) {
+    let totalSeconds = existing?.accumulated_seconds || 0;
+    if (!existing?.is_timer_paused && existing?.last_resumed_at) {
+      const elapsed = Math.max(0, Math.floor((now.getTime() - new Date(existing.last_resumed_at).getTime()) / 1000));
+      totalSeconds += elapsed;
+    } else if (totalSeconds === 0 && existing?.started_at) {
       const startMs = new Date(existing.started_at).getTime();
-      const elapsedMs = now.getTime() - startMs;
-      durationHours = Math.max(0.1, Number((elapsedMs / (1000 * 60 * 60)).toFixed(2)));
-    } else if (existing?.start_date && existing?.start_time) {
-      const startMs = new Date(`${existing.start_date}T${existing.start_time}`).getTime();
-      const elapsedMs = now.getTime() - startMs;
-      durationHours = Math.max(0.1, Number((elapsedMs / (1000 * 60 * 60)).toFixed(2)));
+      totalSeconds = Math.max(60, Math.floor((now.getTime() - startMs) / 1000));
     }
 
+    const durationHours = Math.max(0.1, Number((totalSeconds / 3600).toFixed(2)));
     const durationDisplay = `${durationHours.toFixed(1)}h`;
     const delayReason = payload.delayReason || 'None';
 
@@ -106,10 +191,13 @@ export const stageLogService = {
         completed_at: completedAt,
         duration_hours: durationHours,
         duration_display: durationDisplay,
+        accumulated_seconds: totalSeconds,
+        is_timer_paused: false,
+        last_resumed_at: null,
         operator_name: payload.operatorName,
         delay_reason: delayReason,
         delay_notes: payload.delayNotes || null,
-        updated_at: completedAt
+        updated_at: completedAt,
       })
       .eq('id', stageId)
       .select()

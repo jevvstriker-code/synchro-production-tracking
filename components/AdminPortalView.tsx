@@ -69,6 +69,7 @@ export function AdminPortalView() {
   const [formPin, setFormPin] = useState<string>('');
   const [formPassword, setFormPassword] = useState<string>('');
   const [formPhone, setFormPhone] = useState<string>('');
+  const [formDepartment, setFormDepartment] = useState<string>('Production');
   const [formPermissions, setFormPermissions] = useState<UserPermissions>({
     view_dashboard: true,
     view_job_cards: true,
@@ -77,6 +78,9 @@ export function AdminPortalView() {
     view_rework: true,
     view_reports: false,
     view_team_performance: false,
+    view_qc_shop_floor: false,
+    view_qc_registers: false,
+    view_qc_reports: false,
     requires_admin_approval: true,
   });
   const [formMsg, setFormMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -223,6 +227,7 @@ export function AdminPortalView() {
     setFormPin(String(Math.floor(1000 + Math.random() * 9000)));
     setFormPassword('');
     setFormPhone('');
+    setFormDepartment('Production');
     setFormPermissions({
       view_dashboard: true,
       view_job_cards: true,
@@ -231,6 +236,9 @@ export function AdminPortalView() {
       view_rework: true,
       view_reports: false,
       view_team_performance: false,
+      view_qc_shop_floor: false,
+      view_qc_registers: false,
+      view_qc_reports: false,
       requires_admin_approval: true,
     });
     setFormMsg(null);
@@ -243,18 +251,22 @@ export function AdminPortalView() {
     setFormUsername(user.username);
     setFormRole(user.role);
     setFormPin(user.pin_code);
-    setFormPassword('');
+    setFormPassword(user.password || '');
     setFormPhone(user.phone || '');
+    setFormDepartment(user.department || (user.role.includes('qc') ? 'Quality Assurance' : 'Production'));
     setFormPermissions(
       user.permissions || {
         view_dashboard: true,
         view_job_cards: true,
         view_assembly_lines: true,
-        view_audit_trail: user.role === 'admin',
+        view_audit_trail: user.role === 'admin' || user.role === 'developer',
         view_rework: true,
-        view_reports: user.role === 'admin',
-        view_team_performance: user.role === 'admin',
-        requires_admin_approval: user.role !== 'admin',
+        view_reports: user.role === 'admin' || user.role === 'developer',
+        view_team_performance: user.role === 'admin' || user.role === 'developer',
+        view_qc_shop_floor: user.role === 'admin' || user.role === 'developer' || user.role === 'qc_inspector',
+        view_qc_registers: user.role === 'admin' || user.role === 'developer' || user.role === 'qc_inspector' || user.role === 'dashboard_viewer',
+        view_qc_reports: user.role === 'admin' || user.role === 'developer' || user.role === 'qc_inspector' || user.role === 'dashboard_viewer',
+        requires_admin_approval: user.role !== 'admin' && user.role !== 'developer',
       }
     );
     setFormMsg(null);
@@ -275,7 +287,9 @@ export function AdminPortalView() {
           username: formUsername.toLowerCase().trim(),
           role: formRole,
           pin_code: formPin.trim(),
+          password: formPassword.trim() || undefined,
           phone: formPhone.trim() || undefined,
+          department: formDepartment.trim() || undefined,
           permissions: formPermissions,
         });
 
@@ -296,6 +310,7 @@ export function AdminPortalView() {
           pin_code: formPin.trim(),
           password: formPassword.trim() || formPin.trim(),
           phone: formPhone.trim() || undefined,
+          department: formDepartment.trim() || 'Production',
           permissions: formPermissions,
         });
 
@@ -530,8 +545,9 @@ export function AdminPortalView() {
                 <tr className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
                   <th className="py-3 px-4">Full Name</th>
                   <th className="py-3 px-4">Username</th>
-                  <th className="py-3 px-4">Role</th>
-                  <th className="py-3 px-4">Mobile Quick PIN</th>
+                  <th className="py-3 px-4">Role & Dept</th>
+                  <th className="py-3 px-4">Mobile PIN</th>
+                  <th className="py-3 px-4">Password</th>
                   <th className="py-3 px-4">Manager Approval Rule</th>
                   <th className="py-3 px-4">Allowed Views</th>
                   <th className="py-3 px-4">Status</th>
@@ -541,11 +557,11 @@ export function AdminPortalView() {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-6 text-slate-400">Loading accounts...</td>
+                    <td colSpan={9} className="text-center py-6 text-slate-400">Loading accounts...</td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-6 text-slate-400">No staff accounts match search.</td>
+                    <td colSpan={9} className="text-center py-6 text-slate-400">No staff accounts match search.</td>
                   </tr>
                 ) : (
                   filteredUsers.map((u) => (
@@ -554,9 +570,15 @@ export function AdminPortalView() {
                       <td className="py-3 px-4 font-mono text-slate-600">@{u.username}</td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            u.role === 'admin'
-                              ? 'bg-purple-100 text-purple-800'
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider block w-fit ${
+                            u.role === 'developer'
+                              ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                              : u.role === 'admin'
+                              ? 'bg-indigo-100 text-indigo-800'
+                              : u.role === 'qc_inspector'
+                              ? 'bg-sky-100 text-sky-800'
+                              : u.role === 'dashboard_viewer'
+                              ? 'bg-teal-100 text-teal-800'
                               : u.role === 'supervisor'
                               ? 'bg-blue-100 text-blue-800'
                               : u.role === 'fitter'
@@ -564,17 +586,21 @@ export function AdminPortalView() {
                               : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {u.role}
+                          {u.role.replace(/_/g, ' ')}
                         </span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">{u.department || 'Production'}</span>
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-blue-700">
                         {u.pin_code}
                       </td>
+                      <td className="py-3 px-4 font-mono text-slate-500">
+                        {u.password ? '••••••' : '(PIN)'}
+                      </td>
                       <td className="py-3 px-4">
-                        {u.role === 'admin' ? (
+                        {u.role === 'admin' || u.role === 'developer' ? (
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
                             <ShieldCheck className="w-3 h-3 text-purple-600" />
-                            <span>Admin Manager</span>
+                            <span>{u.role === 'developer' ? 'Developer Master' : 'Admin Manager'}</span>
                           </span>
                         ) : u.permissions?.requires_admin_approval !== false ? (
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-200">
@@ -1352,27 +1378,26 @@ export function AdminPortalView() {
                     onChange={(e) => setFormRole(e.target.value as UserRole)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500"
                   >
+                    <option value="developer">Developer Master (Full Access)</option>
+                    <option value="admin">Admin Manager</option>
+                    <option value="qc_inspector">QC Inspector</option>
+                    <option value="dashboard_viewer">Operations / QC Viewer</option>
+                    <option value="supervisor">Production Supervisor</option>
                     <option value="fitter">Fitter / Operator</option>
-                    <option value="supervisor">Supervisor</option>
                     <option value="ppc">PPC In-Charge</option>
-                    <option value="admin">System Admin</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Mobile 4-Digit PIN *
-                  </label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Department</label>
                   <input
-                    type="password"
-                    maxLength={6}
-                    required
-                    placeholder="1234"
-                    value={formPin}
-                    onChange={(e) => setFormPin(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-center text-lg font-mono tracking-widest text-slate-800 focus:outline-none focus:border-blue-500"
+                    type="text"
+                    placeholder="e.g. Quality Assurance or Production"
+                    value={formDepartment}
+                    onChange={(e) => setFormDepartment(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -1387,20 +1412,34 @@ export function AdminPortalView() {
                 </div>
               </div>
 
-              {!editingUserId && (
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Password (Optional - defaults to PIN)
+                    Mobile 4-Digit PIN *
                   </label>
                   <input
-                    type="password"
+                    type="text"
+                    maxLength={6}
+                    required
+                    placeholder="1234"
+                    value={formPin}
+                    onChange={(e) => setFormPin(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-center text-lg font-mono tracking-widest text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Password / Secret {editingUserId && '(leave empty to keep current)'}
+                  </label>
+                  <input
+                    type="text"
                     placeholder="••••••••"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 font-mono"
                   />
                 </div>
-              )}
+              </div>
 
               {/* Manager Access & Permissions Control */}
               <div className="pt-3 border-t border-slate-200 space-y-2">

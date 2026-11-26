@@ -5,7 +5,7 @@ export const userService = {
   async getAllUsers(): Promise<AppUser[]> {
     const { data, error } = await supabase
       .from('app_users')
-      .select('id, username, full_name, role, pin_code, phone, is_active, permissions, created_at, updated_at')
+      .select('id, username, full_name, role, pin_code, password, phone, department, is_active, permissions, created_at, updated_at')
       .order('role', { ascending: true })
       .order('full_name', { ascending: true });
 
@@ -19,7 +19,7 @@ export const userService = {
   async getUserById(id: string): Promise<AppUser | null> {
     const { data, error } = await supabase
       .from('app_users')
-      .select('id, username, full_name, role, pin_code, phone, is_active, permissions, created_at, updated_at')
+      .select('id, username, full_name, role, pin_code, password, phone, department, is_active, permissions, created_at, updated_at')
       .eq('id', id)
       .maybeSingle();
 
@@ -85,6 +85,7 @@ export const userService = {
     pin_code: string;
     password?: string;
     phone?: string;
+    department?: string;
     permissions?: any;
   }): Promise<AppUser> {
     const { data, error } = await supabase
@@ -96,22 +97,23 @@ export const userService = {
         pin_code: payload.pin_code.trim(),
         password: payload.password || payload.pin_code,
         phone: payload.phone || null,
+        department: payload.department || (payload.role.includes('qc') ? 'Quality Assurance' : 'Production'),
         is_active: true,
         permissions: payload.permissions || {
           view_dashboard: true,
           view_job_cards: true,
           view_assembly_lines: true,
-          view_audit_trail: payload.role === 'admin',
+          view_audit_trail: payload.role === 'admin' || payload.role === 'developer',
           view_rework: true,
-          view_reports: payload.role === 'admin',
-          view_team_performance: payload.role === 'admin',
-          can_create_job_cards: payload.role === 'admin' || payload.role === 'ppc',
+          view_reports: payload.role === 'admin' || payload.role === 'developer',
+          view_team_performance: payload.role === 'admin' || payload.role === 'developer',
+          can_create_job_cards: payload.role === 'admin' || payload.role === 'ppc' || payload.role === 'developer',
           can_update_stages: true,
           can_log_rework: payload.role !== 'fitter',
-          requires_admin_approval: payload.role !== 'admin'
+          requires_admin_approval: payload.role !== 'admin' && payload.role !== 'developer'
         }
       })
-      .select('id, username, full_name, role, pin_code, phone, is_active, permissions, created_at, updated_at')
+      .select('id, username, full_name, role, pin_code, password, phone, department, is_active, permissions, created_at, updated_at')
       .single();
 
     if (error) {
@@ -129,7 +131,7 @@ export const userService = {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .select('id, username, full_name, role, pin_code, phone, is_active, permissions, created_at, updated_at')
+      .select('id, username, full_name, role, pin_code, password, phone, department, is_active, permissions, created_at, updated_at')
       .single();
 
     if (error) {

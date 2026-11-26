@@ -8,14 +8,21 @@ interface AuthContextType {
   currentUser: AppUser | null;
   isLoading: boolean;
   authError: string | null;
+  welcomeBanner: string | null;
+  dismissWelcomeBanner: () => void;
+  portalMode: 'production' | 'qc';
+  setPortalMode: (mode: 'production' | 'qc') => void;
   isLoggedIn: boolean;
   isAdmin: boolean;
+  isDeveloper: boolean;
   isSupervisor: boolean;
   isFitter: boolean;
+  isQCInspector: boolean;
+  isDashboardViewer: boolean;
   canView: (module: string) => boolean;
   requiresApproval: () => boolean;
-  loginWithPin: (pin: string) => Promise<AppUser | null>;
-  loginWithCredentials: (username: string, secret: string) => Promise<AppUser | null>;
+  loginWithPin: (pin: string, requestedMode?: 'production' | 'qc') => Promise<AppUser | null>;
+  loginWithCredentials: (username: string, secret: string, requestedMode?: 'production' | 'qc') => Promise<AppUser | null>;
   logout: () => void;
 }
 

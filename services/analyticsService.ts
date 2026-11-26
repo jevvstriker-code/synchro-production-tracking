@@ -13,7 +13,11 @@ export interface OperatorPerformance {
 }
 
 export const analyticsService = {
-  async getDashboardAnalytics(): Promise<{
+  async getDashboardAnalytics(
+    period: string = 'all',
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
     activeCount: number;
     completedCount: number;
     delayedCount: number;
@@ -31,16 +35,46 @@ export const analyticsService = {
     }[];
   }> {
     // 1. Fetch Job Cards
-    const { data: jobCards } = await supabase.from('job_cards').select('*');
+    let jcQuery = supabase.from('job_cards').select('*');
+
+    if (startDate && endDate) {
+      jcQuery = jcQuery.gte('date', startDate).lte('date', endDate);
+    } else if (startDate) {
+      jcQuery = jcQuery.gte('date', startDate);
+    } else if (endDate) {
+      jcQuery = jcQuery.lte('date', endDate);
+    } else if (period && period !== 'all') {
+      const now = new Date();
+      const todayStr = now.toISOString().substring(0, 10);
+
+      if (period === 'today' || period === 'daily') {
+        jcQuery = jcQuery.eq('date', todayStr);
+      } else {
+        const days = period === '7d' || period === 'weekly' ? 7 : period === '30d' || period === 'monthly' ? 30 : period === '90d' || period === 'quarterly' ? 90 : 30;
+        const pastDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+        jcQuery = jcQuery.gte('date', pastDate);
+      }
+    }
+
+    const { data: jobCards } = await jcQuery;
     const cards = (jobCards || []) as JobCard[];
+    const cardIds = new Set(cards.map((c) => c.id));
 
     // 2. Fetch Stage Logs
     const { data: stageLogs } = await supabase.from('stage_logs').select('*');
-    const stages = (stageLogs || []) as StageLog[];
+    const allStages = (stageLogs || []) as StageLog[];
+    // Filter stage logs matching the current job cards
+    const stages = period === 'all' && !startDate && !endDate
+      ? allStages
+      : allStages.filter((s) => cardIds.has(s.job_card_id));
 
     // 3. Fetch Rework Logs
-    const { data: reworkLogs } = await supabase.from('rework_logs').select('id');
-    const reworkCount = (reworkLogs || []).length;
+    const { data: reworkLogs } = await supabase.from('rework_logs').select('*');
+    const allReworks = (reworkLogs || []) as ReworkLog[];
+    const reworkCount = (period === 'all' && !startDate && !endDate
+      ? allReworks
+      : allReworks.filter((r) => !r.job_card_no || cards.some((c) => c.job_card_no === r.job_card_no))
+    ).length;
 
     let activeCount = 0;
     let completedCount = 0;

@@ -5,18 +5,32 @@ import { AppUser } from '@/types';
 import { userService } from '@/services/userService';
 
 const AUTH_STORAGE_KEY = 'synchro_production_auth_user';
+const PORTAL_MODE_KEY = 'synchro_portal_mode';
 
 export function useAuthController() {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [portalMode, setPortalModeState] = useState<'production' | 'qc'>('production');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [welcomeBanner, setWelcomeBanner] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      const storedMode = localStorage.getItem(PORTAL_MODE_KEY) as 'production' | 'qc' | null;
+      if (storedMode) {
+        setPortalModeState(storedMode);
+      }
+
       if (stored) {
         const parsed = JSON.parse(stored);
         setCurrentUser(parsed);
+
+        // Auto-route to QC if role is QC
+        if (parsed.role === 'qc_inspector' || parsed.role === 'dashboard_viewer') {
+          setPortalModeState('qc');
+        }
+
         // Refresh fresh permissions and profile from Supabase in background
         if (parsed?.id) {
           userService.getUserById(parsed.id).then((fresh) => {
@@ -39,7 +53,16 @@ export function useAuthController() {
     }
   }, []);
 
-  const loginWithPin = useCallback(async (pin: string): Promise<AppUser | null> => {
+  const setPortalMode = useCallback((mode: 'production' | 'qc') => {
+    setPortalModeState(mode);
+    try {
+      localStorage.setItem(PORTAL_MODE_KEY, mode);
+    } catch (e) {
+      console.error('Failed to save portal mode', e);
+    }
+  }, []);
+
+  const loginWithPin = useCallback(async (pin: string, requestedMode?: 'production' | 'qc'): Promise<AppUser | null> => {
     setIsLoading(true);
     setAuthError(null);
     try {
@@ -47,6 +70,14 @@ export function useAuthController() {
       if (user) {
         setCurrentUser(user);
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+        
+        // Determine portal mode
+        const mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
+        setPortalMode(mode);
+
+        setWelcomeBanner(`Welcome, ${user.full_name}!`);
+        setTimeout(() => setWelcomeBanner(null), 6000);
+
         return user;
       } else {
         setAuthError('Invalid PIN code or inactive account.');
@@ -59,10 +90,10 @@ export function useAuthController() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setPortalMode]);
 
   const loginWithCredentials = useCallback(
-    async (username: string, passwordOrPin: string): Promise<AppUser | null> => {
+    async (username: string, passwordOrPin: string, requestedMode?: 'production' | 'qc'): Promise<AppUser | null> => {
       setIsLoading(true);
       setAuthError(null);
       try {
@@ -70,6 +101,13 @@ export function useAuthController() {
         if (user) {
           setCurrentUser(user);
           localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+          
+          const mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
+          setPortalMode(mode);
+
+          setWelcomeBanner(`Welcome, ${user.full_name}!`);
+          setTimeout(() => setWelcomeBanner(null), 6000);
+
           return user;
         } else {
           setAuthError('Invalid username, password, or PIN.');
@@ -83,22 +121,23 @@ export function useAuthController() {
         setIsLoading(false);
       }
     },
-    []
+    [setPortalMode]
   );
 
   const logout = useCallback(() => {
     setCurrentUser(null);
+    setWelcomeBanner(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
   }, []);
 
   const canView = useCallback(
     (moduleId: string): boolean => {
-      // 1. Admin always has full view access to everything
-      if (currentUser?.role === 'admin') return true;
+      // 1. Admin and Developer always have full view access to everything
+      if (currentUser?.role === 'admin' || currentUser?.role === 'developer') return true;
 
       // 2. Guest (unauthenticated) can only see public dashboard
       if (!currentUser) {
-        return moduleId === 'dashboard';
+        return moduleId === 'dashboard' || moduleId === 'qc-dashboard';
       }
 
       // 3. Check granular permissions configured by Admin
@@ -112,39 +151,50 @@ export function useAuthController() {
       // 4. Default fallback matrix by role
       switch (currentUser.role) {
         case 'supervisor':
-          return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines', 'rework-register', 'reports'].includes(moduleId);
+          return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines', 'rework-register', 'reports', 'qc-dashboard', 'qc-registers'].includes(moduleId);
         case 'ppc':
-          return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines'].includes(moduleId);
+          return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines', 'reports'].includes(moduleId);
         case 'fitter':
-          return ['assembly-lines'].includes(moduleId);
+          return ['dashboard', 'job-cards', 'assembly-lines', 'rework-register'].includes(moduleId);
+        case 'qc_inspector':
+          return ['qc-dashboard', 'qc-shop-floor', 'qc-registers', 'qc-reports', 'dashboard', 'job-cards', 'assembly-lines', 'rework-register'].includes(moduleId);
+        case 'dashboard_viewer':
+          return ['qc-dashboard', 'qc-registers', 'qc-reports', 'dashboard', 'reports'].includes(moduleId);
         default:
-          return moduleId === 'dashboard';
+          return moduleId === 'dashboard' || moduleId === 'qc-dashboard';
       }
     },
     [currentUser]
   );
 
   const requiresApproval = useCallback((): boolean => {
-    // Admin never requires approval
-    if (currentUser?.role === 'admin') return false;
+    // Admin and Developer never require approval
+    if (currentUser?.role === 'admin' || currentUser?.role === 'developer') return false;
 
     // Check specific user flag if configured
     if (currentUser?.permissions?.requires_admin_approval !== undefined) {
       return !!currentUser.permissions.requires_admin_approval;
     }
 
-    // By default, every non-admin action requires Admin approval
-    return true;
+    // Default: Fitters and Supervisors require approval for floor updates
+    return currentUser?.role === 'fitter' || currentUser?.role === 'supervisor';
   }, [currentUser]);
 
   return {
     currentUser,
     isLoading,
     authError,
+    welcomeBanner,
+    dismissWelcomeBanner: () => setWelcomeBanner(null),
+    portalMode,
+    setPortalMode,
     isLoggedIn: !!currentUser,
-    isAdmin: currentUser?.role === 'admin',
-    isSupervisor: currentUser?.role === 'supervisor' || currentUser?.role === 'admin',
-    isFitter: currentUser?.role === 'fitter' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin',
+    isAdmin: currentUser?.role === 'admin' || currentUser?.role === 'developer',
+    isDeveloper: currentUser?.role === 'developer',
+    isSupervisor: currentUser?.role === 'supervisor',
+    isFitter: currentUser?.role === 'fitter',
+    isQCInspector: currentUser?.role === 'qc_inspector',
+    isDashboardViewer: currentUser?.role === 'dashboard_viewer',
     canView,
     requiresApproval,
     loginWithPin,

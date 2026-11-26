@@ -1,4 +1,6 @@
-export type UserRole = 'admin' | 'supervisor' | 'fitter' | 'ppc';
+export type UserRole = 'admin' | 'supervisor' | 'fitter' | 'ppc' | 'qc_inspector' | 'dashboard_viewer' | 'developer';
+
+export type PortalMode = 'production' | 'qc';
 
 export interface UserPermissions {
   view_dashboard: boolean;
@@ -10,6 +12,9 @@ export interface UserPermissions {
   view_team_performance: boolean;
   view_backup_restore?: boolean;
   view_admin_portal?: boolean;
+  view_qc_shop_floor?: boolean;
+  view_qc_registers?: boolean;
+  view_qc_reports?: boolean;
   can_create_job_cards?: boolean;
   can_update_stages?: boolean;
   can_log_rework?: boolean;
@@ -22,7 +27,9 @@ export interface AppUser {
   full_name: string;
   role: UserRole;
   pin_code: string;
+  password?: string;
   phone?: string;
+  department?: string;
   is_active: boolean;
   permissions?: UserPermissions;
   created_at?: string;
@@ -93,6 +100,9 @@ export interface StageLog {
   operator_name?: string | null;
   delay_reason: string;
   delay_notes?: string | null;
+  is_timer_paused?: boolean;
+  accumulated_seconds?: number;
+  last_resumed_at?: string | null;
   is_admin_override: boolean;
   admin_override_reason?: string | null;
   admin_override_by?: string | null;
@@ -179,3 +189,6 @@ export const ASSEMBLY_LINES = [
   "Assembly Line 6",
   "Assembly Line 7"
 ];
+
+export * from './qc';
+

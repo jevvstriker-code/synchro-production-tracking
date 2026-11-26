@@ -15,6 +15,8 @@ import { LoginModal } from '@/components/LoginModal';
 import { TeamPerformanceView } from '@/components/TeamPerformanceView';
 import { AdminPortalView } from '@/components/AdminPortalView';
 import { ElectricCurrentTracker } from '@/components/ElectricCurrentTracker';
+import { OpeningSplashAnimation } from '@/components/OpeningSplashAnimation';
+import { QCManagementView } from '@/components/qc/QCManagementView';
 
 import { jobCardService } from '@/services/jobCardService';
 import { stageLogService } from '@/services/stageLogService';
@@ -52,11 +54,34 @@ import {
   Factory,
   Zap,
   FileJson,
-  ShieldAlert
+  ShieldAlert,
+  Calendar
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { currentUser, isLoggedIn, isAdmin, isSupervisor, canView, requiresApproval } = useAuth();
+  const {
+    currentUser,
+    isLoggedIn,
+    isAdmin,
+    isSupervisor,
+    isDeveloper,
+    isQCInspector,
+    canView,
+    requiresApproval,
+    welcomeBanner,
+    dismissWelcomeBanner,
+    portalMode,
+    setPortalMode,
+  } = useAuth();
+
+  // Splash Screen State
+  const [showSplash, setShowSplash] = useState<boolean>(true);
+
+  // Production Dashboard Date Filter State
+  const [prodPeriod, setProdPeriod] = useState<string>('all');
+  const [prodStartDate, setProdStartDate] = useState<string>('');
+  const [prodEndDate, setProdEndDate] = useState<string>('');
+  const [isProdCustomDate, setIsProdCustomDate] = useState<boolean>(false);
 
   // Tab State
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -143,12 +168,14 @@ export default function HomePage() {
   // Load all data
   const loadAllData = useCallback(async () => {
     try {
+      const activeStart = isProdCustomDate ? prodStartDate : undefined;
+      const activeEnd = isProdCustomDate ? prodEndDate : undefined;
       const [cards, lines, reworks, audits, analytics] = await Promise.all([
         jobCardService.getAllJobCards(),
         assemblyLineService.getAll(),
         reworkService.getAllReworkLogs(),
         auditService.getAuditLogs(50),
-        analyticsService.getDashboardAnalytics(),
+        analyticsService.getDashboardAnalytics(isProdCustomDate ? 'custom' : prodPeriod, activeStart, activeEnd),
       ]);
       setJobCards(cards);
       setAssemblyLines(lines);
@@ -160,7 +187,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [prodPeriod, prodStartDate, prodEndDate, isProdCustomDate]);
 
   useEffect(() => {
     loadAllData();
@@ -405,6 +432,22 @@ export default function HomePage() {
 
   // Filter panels for dashboard table
   const filteredPanels = jobCards.filter((jc) => {
+    // Period date filter
+    if (isProdCustomDate && prodStartDate && prodEndDate) {
+      if (jc.date < prodStartDate || jc.date > prodEndDate) return false;
+    } else if (isProdCustomDate && prodStartDate) {
+      if (jc.date < prodStartDate) return false;
+    } else if (isProdCustomDate && prodEndDate) {
+      if (jc.date > prodEndDate) return false;
+    } else if (prodPeriod === 'today') {
+      const today = new Date().toISOString().substring(0, 10);
+      if (jc.date !== today) return false;
+    } else if (prodPeriod === '7d' || prodPeriod === '30d' || prodPeriod === '90d') {
+      const days = prodPeriod === '7d' ? 7 : prodPeriod === '30d' ? 30 : 90;
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+      if (jc.date < cutoff) return false;
+    }
+
     const q = searchFilter.toLowerCase();
     return (
       jc.job_card_no.toLowerCase().includes(q) ||
@@ -416,6 +459,18 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col antialiased text-slate-800">
+      {/* 0. Opening Splash Animation without lag */}
+      {showSplash && (
+        <OpeningSplashAnimation
+          onFinish={() => {
+            setShowSplash(false);
+            if (!isLoggedIn) {
+              setIsLoginModalOpen(true);
+            }
+          }}
+        />
+      )}
+
       {/* Underlying Web Application (Hidden during print so only printable modals render) */}
       <div className="print:hidden flex flex-col flex-1">
         {/* Top Navbar */}
@@ -430,9 +485,28 @@ export default function HomePage() {
           }}
         />
 
+        {/* Welcome Toast Notification Banner */}
+        {welcomeBanner && (
+          <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center space-x-2.5 text-xs sm:text-sm font-semibold">
+              <Zap className="w-4 h-4 text-amber-300 fill-amber-300 animate-pulse" />
+              <span>{welcomeBanner}</span>
+            </div>
+            <button
+              onClick={dismissWelcomeBanner}
+              className="p-1 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition"
+              aria-label="Dismiss banner"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Main Container */}
         <main className="flex-1 w-full max-w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto">
-        {!isAdmin && !canView(activeTab) ? (
+        {portalMode === 'qc' ? (
+          <QCManagementView />
+        ) : !isAdmin && !canView(activeTab) ? (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm space-y-4 my-8">
             <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200 shadow-sm">
               <ShieldAlert className="w-8 h-8" />
@@ -459,6 +533,64 @@ export default function HomePage() {
         {/* ================= TAB 1: DASHBOARD ================= */}
         {activeTab === 'dashboard' && (
           <section className="space-y-4 sm:space-y-6">
+            {/* Dashboard Period Filter */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg flex items-center space-x-1.5">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Production Window:</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  {[
+                    { id: 'all', label: 'All Time' },
+                    { id: 'today', label: 'Today' },
+                    { id: '7d', label: 'Last 7 Days' },
+                    { id: '30d', label: 'Last 30 Days' },
+                    { id: '90d', label: 'Last 90 Days' },
+                    { id: 'custom', label: 'Specific Dates' },
+                  ].map((btn) => (
+                    <button
+                      key={btn.id}
+                      onClick={() => {
+                        if (btn.id === 'custom') {
+                          setIsProdCustomDate(true);
+                          setProdPeriod('custom');
+                        } else {
+                          setIsProdCustomDate(false);
+                          setProdPeriod(btn.id);
+                        }
+                      }}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${
+                        (btn.id === 'custom' && isProdCustomDate) || (!isProdCustomDate && prodPeriod === btn.id)
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isProdCustomDate && (
+                <div className="flex items-center space-x-2 text-xs bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase">From:</span>
+                  <input
+                    type="date"
+                    value={prodStartDate}
+                    onChange={(e) => setProdStartDate(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 focus:outline-none focus:border-blue-500 font-mono text-xs"
+                  />
+                  <span className="text-slate-400 font-bold">to</span>
+                  <input
+                    type="date"
+                    value={prodEndDate}
+                    onChange={(e) => setProdEndDate(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 focus:outline-none focus:border-blue-500 font-mono text-xs"
+                  />
+                </div>
+              )}
+            </div>
             {/* Delay Bottleneck Banner */}
             {analyticsData && analyticsData.delayedCount > 0 && (
               <div className="bg-amber-50 border-l-4 border-amber-600 p-4 rounded-2xl shadow-xs flex items-center justify-between">
@@ -1541,6 +1673,21 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      {/* Enterprise Copyright Footer */}
+      <footer className="mt-auto bg-slate-900 border-t border-slate-800 text-slate-400 py-3.5 px-4 text-center text-xs">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center space-x-2 text-[11px] sm:text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="font-semibold text-slate-200">Synchro Electricals Pvt. Ltd.</span>
+            <span className="text-slate-600 hidden sm:inline">•</span>
+            <span className="text-slate-400">Integrated Shop-Floor Production & QC Intelligence Portal</span>
+          </div>
+          <div className="text-[11px] sm:text-xs font-medium text-slate-300">
+            Copyright © <strong className="text-cyan-400">Industrial Dr.</strong> Prepared this app for Synchro Electricals Pvt. Ltd.
+          </div>
+        </div>
+      </footer>
       </div>
 
       {/* MODALS */}

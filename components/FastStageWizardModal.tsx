@@ -93,20 +93,26 @@ export function FastStageWizardModal({
   // Live stopwatch counter effect
   useEffect(() => {
     let interval: any = null;
-    if (currentStage && currentStage.status === 'in_progress' && currentStage.started_at) {
+    if (currentStage && currentStage.status === 'in_progress') {
       const updateTimer = () => {
-        const start = new Date(currentStage.started_at!).getTime();
-        const now = Date.now();
-        const diffSecs = Math.max(0, Math.floor((now - start) / 1000));
-        const hrs = Math.floor(diffSecs / 3600);
-        const mins = Math.floor((diffSecs % 3600) / 60);
-        const secs = diffSecs % 60;
+        let total = currentStage.accumulated_seconds || 0;
+        if (!currentStage.is_timer_paused && currentStage.last_resumed_at) {
+          const running = Math.max(0, Math.floor((Date.now() - new Date(currentStage.last_resumed_at).getTime()) / 1000));
+          total += running;
+        } else if (!currentStage.is_timer_paused && currentStage.started_at && !currentStage.accumulated_seconds) {
+          total = Math.max(0, Math.floor((Date.now() - new Date(currentStage.started_at).getTime()) / 1000));
+        }
+        const hrs = Math.floor(total / 3600);
+        const mins = Math.floor((total % 3600) / 60);
+        const secs = total % 60;
         setLiveElapsed(
           `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
         );
       };
       updateTimer();
-      interval = setInterval(updateTimer, 1000);
+      if (!currentStage.is_timer_paused) {
+        interval = setInterval(updateTimer, 1000);
+      }
     } else {
       setLiveElapsed('00:00:00');
     }
@@ -117,6 +123,55 @@ export function FastStageWizardModal({
 
   if (!isOpen || !jobCard || !currentStage) return null;
 
+  const prevStage = activeStepIndex > 0 ? stages[activeStepIndex - 1] : null;
+  const isPreviousStageCompleted = activeStepIndex === 0 || prevStage?.status === 'completed';
+
+  // Handler: Pause Stage Working Timer
+  const handlePauseTimer = async () => {
+    setIsSubmitting(true);
+    setStatusMessage(null);
+    try {
+      await stageLogService.pauseStageTimer(currentStage.id);
+      await auditService.logAudit({
+        job_card_no: jobCard.job_card_no,
+        action: `Paused Stage Timer: ${currentStage.stage_name}`,
+        actor_name: currentUser?.full_name || operatorName.trim() || 'Operator',
+        actor_role: currentUser?.role || 'fitter',
+        details: `Elapsed: ${liveElapsed} | Operator switching tasks`,
+      });
+      setStatusMessage({ text: '⏸ Timer paused. You can safely switch to work on another panel.', type: 'success' });
+      onRefresh();
+    } catch (e: any) {
+      console.error('Error pausing timer', e);
+      setStatusMessage({ text: 'Error pausing timer: ' + e.message, type: 'error' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler: Resume Stage Working Timer
+  const handleResumeTimer = async () => {
+    setIsSubmitting(true);
+    setStatusMessage(null);
+    try {
+      await stageLogService.resumeStageTimer(currentStage.id);
+      await auditService.logAudit({
+        job_card_no: jobCard.job_card_no,
+        action: `Resumed Stage Timer: ${currentStage.stage_name}`,
+        actor_name: currentUser?.full_name || operatorName.trim() || 'Operator',
+        actor_role: currentUser?.role || 'fitter',
+        details: `Active stopwatch resumed on floor`,
+      });
+      setStatusMessage({ text: '▶ Working timer resumed!', type: 'success' });
+      onRefresh();
+    } catch (e: any) {
+      console.error('Error resuming timer', e);
+      setStatusMessage({ text: 'Error resuming timer: ' + e.message, type: 'error' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const currentDef = PRODUCTION_STAGES[activeStepIndex] || {
     name: currentStage.stage_name,
     description: '',
@@ -125,6 +180,13 @@ export function FastStageWizardModal({
 
   // Handler: Start Stage (Auto records start time)
   const handleStartStage = async () => {
+    if (!isPreviousStageCompleted) {
+      setStatusMessage({
+        text: `⚠️ Sequential Stage Rule: Stage ${activeStepIndex} (${prevStage?.stage_name}) must be completed before starting this stage.`,
+        type: 'error',
+      });
+      return;
+    }
     if (!operatorName.trim()) {
       setStatusMessage({ text: 'Please enter operator name before starting stage.', type: 'error' });
       return;
@@ -159,6 +221,13 @@ export function FastStageWizardModal({
 
   // Handler: Complete Stage & Advance to Next (Auto records end time)
   const handleCompleteAndNext = async () => {
+    if (!isPreviousStageCompleted) {
+      setStatusMessage({
+        text: `⚠️ Sequential Stage Rule: Stage ${activeStepIndex} (${prevStage?.stage_name}) must be completed before finishing this stage.`,
+        type: 'error',
+      });
+      return;
+    }
     if (!operatorName.trim()) {
       setStatusMessage({ text: 'Operator name is mandatory before completing stage.', type: 'error' });
       return;
@@ -393,10 +462,19 @@ export function FastStageWizardModal({
               </div>
               <div className="text-base sm:text-lg font-mono font-bold text-slate-900 leading-none mt-0.5">
                 {currentStage.status === 'in_progress' ? (
-                  <span className="text-amber-600 flex items-center">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping mr-1.5 inline-block"></span>
-                    {liveElapsed}
-                  </span>
+                  currentStage.is_timer_paused ? (
+                    <span className="text-amber-800 flex items-center font-bold">
+                      <span className="px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 text-[9px] mr-1.5 font-sans font-extrabold uppercase tracking-wide">
+                        PAUSED
+                      </span>
+                      {liveElapsed}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 flex items-center font-bold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-1.5 inline-block"></span>
+                      {liveElapsed}
+                    </span>
+                  )
                 ) : currentStage.status === 'completed' ? (
                   <span className="text-emerald-700 font-mono">
                     {currentStage.duration_display || `${currentStage.duration_hours || 1.5}h`}
@@ -635,32 +713,68 @@ export function FastStageWizardModal({
             </button>
           </div>
 
-          {/* Primary Action Button (Start or Complete & Next) */}
-          <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+          {/* Sequential Stage Enforcement Warning */}
+          {!isPreviousStageCompleted && (
+            <div className="bg-rose-50 border border-rose-300 text-rose-800 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>
+                Sequential Rule: Stage {activeStepIndex} ({prevStage?.stage_name}) must be completed first before working on this stage.
+              </span>
+            </div>
+          )}
+
+          {/* Primary Action Button (Start, Pause/Resume, or Complete & Next) */}
+          <div className="flex flex-wrap items-center space-x-2 w-full sm:w-auto justify-end gap-2">
             {currentStage.status === 'pending' ? (
               <button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isPreviousStageCompleted}
                 onClick={handleStartStage}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2"
               >
                 <Play className="w-4 h-4 fill-white" />
                 <span>▶ Start Stage (Auto Clock)</span>
               </button>
             ) : currentStage.status === 'in_progress' ? (
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleCompleteAndNext}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>
-                  {activeStepIndex === PRODUCTION_STAGES.length - 1
-                    ? '✓ Finish & Dispatch Panel'
-                    : '✓ Complete & Next Stage ➔'}
-                </span>
-              </button>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                {currentStage.is_timer_paused ? (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleResumeTimer}
+                    className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow transition flex items-center space-x-1.5"
+                    title="Resume active stopwatch timer"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-white" />
+                    <span>▶ Resume Timer</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handlePauseTimer}
+                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow transition flex items-center space-x-1.5"
+                    title="Pause timer if working on another panel"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>⏸ Pause Timer (Switch Panel)</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={isSubmitting || !isPreviousStageCompleted}
+                  onClick={handleCompleteAndNext}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {activeStepIndex === PRODUCTION_STAGES.length - 1
+                      ? '✓ Finish & Dispatch'
+                      : '✓ Complete & Next ➔'}
+                  </span>
+                </button>
+              </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center space-x-1">
