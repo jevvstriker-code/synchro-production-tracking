@@ -27,7 +27,7 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
     const values = Object.values(data);
 
     const backgroundColors = labels.map((l) =>
-      l.includes('(Acc)') ? '#0284c7' : l.includes('(Rej/Rew)') ? '#e11d48' : '#3b82f6'
+      l.includes('(Acc)') ? '#06b6d4' : l.includes('(Rej/Rew)') ? '#f43f5e' : '#3b82f6'
     );
 
     chartInstance.current = new Chart(ctx, {
@@ -49,6 +49,13 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
         plugins: {
           legend: { display: false },
           tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#06b6d4',
+            borderWidth: 1,
+            titleFont: { family: 'monospace' },
+            bodyFont: { family: 'monospace' },
+            padding: 10,
+            cornerRadius: 8,
             callbacks: {
               label: (context) => ` Quantity: ${context.raw} items`,
             },
@@ -57,12 +64,12 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
         scales: {
           x: {
             grid: { display: false },
-            ticks: { font: { size: 10 } },
+            ticks: { color: '#94a3b8', font: { size: 10, family: 'monospace' } },
           },
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 1 },
-            grid: { color: '#f1f5f9' },
+            ticks: { color: '#94a3b8', stepSize: 1, font: { family: 'monospace' } },
+            grid: { color: 'rgba(51, 65, 85, 0.35)' },
           },
         },
         onClick: (evt, activeEls) => {
@@ -83,10 +90,10 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
   }, [data, onSelectStage]);
 
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+    <div className="cyber-card p-4 sm:p-5 rounded-2xl border border-cyan-500/25 shadow-lg flex flex-col h-full">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-bold text-slate-800">QC Status by Stage</h3>
-        <span className="text-[10px] text-slate-400 font-medium">Click bar to drill down</span>
+        <h3 className="text-sm font-bold text-white tracking-wide font-mono">QC Status by Stage</h3>
+        <span className="text-[10px] text-cyan-400 font-mono">CLICK BAR TO DRILL DOWN</span>
       </div>
       <div className="relative flex-grow min-h-[220px] w-full">
         <canvas ref={canvasRef} className="cursor-pointer" />

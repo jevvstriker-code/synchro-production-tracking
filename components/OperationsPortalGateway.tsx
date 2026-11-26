@@ -19,7 +19,10 @@ import {
   Layers,
   Sparkles,
   HelpCircle,
-  X
+  X,
+  Radio,
+  Terminal,
+  Activity
 } from 'lucide-react';
 
 interface OperationsPortalGatewayProps {
@@ -49,7 +52,7 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
     const passVal = password.trim();
 
     if (!idVal) {
-      setLocalError('Please enter your username, email, or PIN code.');
+      setLocalError('Please enter your Operator ID, username, or PIN.');
       return;
     }
 
@@ -66,7 +69,7 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
     }
 
     if (!passVal) {
-      setLocalError('Please enter your password.');
+      setLocalError('Please enter your security access key / password.');
       return;
     }
 
@@ -75,7 +78,7 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } else {
-      setLocalError('Invalid credentials. Please verify your username and password.');
+      setLocalError('Invalid credentials. Access rejected by security gateway.');
     }
   };
 
@@ -112,44 +115,19 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-sky-50/50 to-blue-50/30 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden select-none">
-      {/* Background Decorative Electrical & Engineering Doodle Watermarks */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.06] sm:opacity-[0.08]">
-        {/* Top Left Doodles */}
-        <div className="absolute top-8 left-8 sm:top-12 sm:left-16 text-blue-700">
-          <Zap className="w-16 h-16 sm:w-24 sm:h-24 stroke-[1.2]" />
-        </div>
-        <div className="absolute top-28 left-48 sm:top-36 sm:left-64 text-blue-800">
-          <Factory className="w-20 h-20 sm:w-28 sm:h-28 stroke-[1.2]" />
-        </div>
-
-        {/* Top Right Doodles */}
-        <div className="absolute top-10 right-12 sm:top-16 sm:right-24 text-blue-700">
-          <ShieldCheck className="w-16 h-16 sm:w-24 sm:h-24 stroke-[1.2]" />
-        </div>
-        <div className="absolute top-44 right-36 text-blue-800">
-          <Cpu className="w-14 h-14 sm:w-20 sm:h-20 stroke-[1.2]" />
-        </div>
-
-        {/* Bottom Left Doodles */}
-        <div className="absolute bottom-16 left-12 sm:bottom-20 sm:left-24 text-blue-700">
-          <Wrench className="w-16 h-16 sm:w-24 sm:h-24 stroke-[1.2]" />
-        </div>
-        <div className="absolute bottom-36 left-44 text-blue-800">
-          <Layers className="w-14 h-14 sm:w-20 sm:h-20 stroke-[1.2]" />
-        </div>
-
-        {/* Bottom Right Doodles */}
-        <div className="absolute bottom-12 right-16 sm:bottom-16 sm:right-32 text-blue-700">
-          <Zap className="w-20 h-20 sm:w-28 sm:h-28 stroke-[1.2]" />
-        </div>
+    <div className="min-h-screen w-full cyber-grid-bg text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden select-none">
+      {/* Ambient Cybernetic Radial Energy Flares */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-cyan-600/15 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-indigo-600/5 rounded-full blur-[150px] pointer-events-none" />
       </div>
 
       {/* Close button if rendered as a modal overlay for authenticated users */}
       {closable && onClose && (
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white text-slate-500 hover:text-slate-800 shadow-sm border border-slate-200 transition z-20"
+          className="absolute top-5 right-5 p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white shadow-lg border border-cyan-500/30 transition z-20"
           title="Close Gateway"
         >
           <X className="w-5 h-5" />
@@ -160,43 +138,53 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
       <div className="relative w-full max-w-md sm:max-w-lg mx-auto flex flex-col items-center space-y-5 sm:space-y-6 z-10 my-auto py-4">
         {/* Top Brand Header */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 bg-white rounded-xl shadow-md border border-slate-200/80 p-1 flex items-center justify-center shrink-0">
+          <div className="relative w-12 h-12 sm:w-14 sm:h-14 bg-white/95 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-400/50 p-1 flex items-center justify-center shrink-0">
             <Image
               src="/synchro-logo.png"
               alt="Synchro Logo"
-              width={44}
-              height={44}
-              className="object-contain w-full h-full rounded-lg"
+              width={48}
+              height={48}
+              className="object-contain w-full h-full rounded-xl"
               priority
             />
           </div>
           <div className="text-left">
-            <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-wider uppercase leading-none">
-              SYNCHRO ELECTRICALS
-            </h2>
-            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 tracking-widest uppercase mt-0.5">
-              PVT. LTD.
+            <div className="flex items-center space-x-2">
+              <h2 className="text-base sm:text-lg font-black text-white tracking-widest uppercase font-mono">
+                SYNCHRO ELECTRICALS
+              </h2>
+            </div>
+            <p className="text-[10px] sm:text-[11px] font-mono text-cyan-400 tracking-widest uppercase flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>CORE OPERATIONS // PVT. LTD.</span>
             </p>
           </div>
         </div>
 
         {/* Title and Accent */}
         <div className="text-center space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Operations <span className="text-blue-600">Portal</span>
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 uppercase font-mono">
+            OPERATIONS PORTAL
           </h1>
-          <div className="w-12 h-1 bg-blue-600 rounded-full mx-auto" />
-          <p className="text-xs sm:text-sm text-slate-500 font-medium pt-0.5">
-            Production & Quality Management System
+          <div className="w-20 h-1 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full mx-auto shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+          <p className="text-xs sm:text-sm text-slate-400 font-mono pt-1">
+            Production &amp; Quality Intelligence Gateway
           </p>
         </div>
 
-        {/* Central Card */}
-        <div className="w-full bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-xl shadow-blue-900/5 p-6 sm:p-8 space-y-5 transition-all">
+        {/* Central Futuristic Holographic Card */}
+        <div className="w-full bg-[#0a1020]/90 backdrop-blur-2xl rounded-3xl border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.12)] p-6 sm:p-8 space-y-5 transition-all relative">
+          {/* Corner HUD markers */}
+          <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+          <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+          <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+          <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+
           {/* Error Message */}
           {(localError || authError) && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-2xl animate-shake">
-              {localError || authError}
+            <div className="bg-red-950/80 border border-red-500/50 text-red-200 text-xs p-3 rounded-2xl animate-shake font-mono flex items-center space-x-2">
+              <span className="text-red-400 font-bold">[ERR]:</span>
+              <span>{localError || authError}</span>
             </div>
           )}
 
@@ -205,8 +193,11 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
             <form onSubmit={handleSignIn} className="space-y-4 text-xs sm:text-sm">
               {/* Username Input */}
               <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-cyan-400/80 block">
+                  Operator Identifier // Email / PIN
+                </label>
                 <div className="relative flex items-center">
-                  <div className="absolute left-3.5 text-slate-400">
+                  <div className="absolute left-3.5 text-cyan-400/70">
                     <User className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <input
@@ -214,71 +205,74 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="Username / Email"
-                    className="w-full pl-10 sm:pl-11 pr-4 py-3 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-600 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none transition shadow-xs text-xs sm:text-sm"
+                    placeholder="Enter username or 4-digit PIN"
+                    className="w-full pl-10 sm:pl-11 pr-4 py-3 bg-[#050812] border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 rounded-2xl text-white placeholder:text-slate-500 focus:outline-none transition shadow-inner text-xs sm:text-sm font-mono"
                   />
                 </div>
               </div>
 
               {/* Password Input (Strictly Masked) */}
               <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-cyan-400/80 block">
+                  Security Access Key // Password
+                </label>
                 <div className="relative flex items-center">
-                  <div className="absolute left-3.5 text-slate-400">
+                  <div className="absolute left-3.5 text-cyan-400/70">
                     <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="w-full pl-10 sm:pl-11 pr-11 py-3 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-600 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none transition shadow-xs text-xs sm:text-sm"
+                    placeholder="••••••••"
+                    className="w-full pl-10 sm:pl-11 pr-11 py-3 bg-[#050812] border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 rounded-2xl text-white placeholder:text-slate-500 focus:outline-none transition shadow-inner text-xs sm:text-sm font-mono tracking-widest"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 text-slate-400 hover:text-slate-600 p-1"
-                    title={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-3.5 text-slate-400 hover:text-cyan-300 p-1 transition"
+                    title={showPassword ? 'Hide security key' : 'Show security key'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between text-xs text-slate-600 pt-0.5">
+              {/* Remember Me & Help Tip */}
+              <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5 font-mono">
                 <label className="flex items-center space-x-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 cursor-pointer"
                   />
-                  <span className="font-medium text-slate-700">Remember me</span>
+                  <span className="text-slate-300">Remember session</span>
                 </label>
 
                 <button
                   type="button"
                   onClick={() => setShowForgotTip(!showForgotTip)}
-                  className="text-blue-600 hover:text-blue-700 hover:underline font-semibold"
+                  className="text-cyan-400 hover:text-cyan-300 hover:underline font-mono"
                 >
-                  Forgot password?
+                  Forgot key?
                 </button>
               </div>
 
               {showForgotTip && (
-                <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 leading-relaxed animate-in fade-in">
-                  Please contact the System Administrator or PPC Manager to reset credentials or use your 4-digit quick PIN.
+                <div className="p-2.5 bg-cyan-950/70 border border-cyan-500/40 rounded-xl text-[11px] text-cyan-200 leading-relaxed font-mono">
+                  [GATEWAY NOTE]: Contact PPC or System Admin to reset PIN/password or use standard quick PIN code.
                 </div>
               )}
 
-              {/* Primary Sign In Button */}
+              {/* Primary Cyber Sign In Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3 sm:py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2 text-xs sm:text-sm"
+                className="w-full py-3 sm:py-3.5 px-6 rounded-2xl text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase transition-all duration-200 flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 hover:from-blue-500 hover:via-cyan-400 hover:to-blue-500 shadow-[0_0_25px_rgba(6,182,212,0.45)] hover:shadow-[0_0_35px_rgba(6,182,212,0.7)] active:scale-[0.99] border border-cyan-300/40"
               >
-                <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>{isLoading ? 'AUTHENTICATING...' : 'INITIALIZE SYSTEM ACCESS'}</span>
+                <ArrowRight className="w-4 h-4 text-cyan-100" />
               </button>
 
               {/* Switch to Mobile PIN Keypad */}
@@ -286,27 +280,27 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
                 <button
                   type="button"
                   onClick={() => setAuthMode('keypad')}
-                  className="text-xs text-slate-500 hover:text-blue-600 font-semibold"
+                  className="text-xs text-slate-400 hover:text-cyan-400 font-mono transition"
                 >
-                  Switch to Touch PIN Keypad →
+                  [ SWITCH TO TOUCH PIN KEYPAD ]
                 </button>
               </div>
             </form>
           ) : (
             /* Mode 2: Quick Mobile Touch Keypad */
             <div className="space-y-4">
-              <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Enter 4-Digit Quick PIN
+              <div className="text-center font-mono">
+                <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">
+                  ENTER 4-DIGIT QUICK ACCESS PIN
                 </span>
-                <div className="flex justify-center space-x-2.5 my-2.5">
+                <div className="flex justify-center space-x-2.5 my-3">
                   {[0, 1, 2, 3].map((idx) => (
                     <div
                       key={idx}
-                      className={`w-10 h-11 sm:w-11 sm:h-12 rounded-2xl border-2 flex items-center justify-center text-xl font-mono font-bold transition-all ${
+                      className={`w-11 h-12 rounded-2xl border-2 flex items-center justify-center text-xl font-mono font-bold transition-all ${
                         pin.length > idx
-                          ? 'border-blue-600 bg-blue-50 text-blue-600 scale-105 shadow-sm'
-                          : 'border-slate-300 bg-slate-50 text-slate-300'
+                          ? 'border-cyan-400 bg-cyan-950/80 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.5)] scale-105'
+                          : 'border-slate-700 bg-slate-900/60 text-slate-600'
                       }`}
                     >
                       {pin.length > idx ? '●' : ''}
@@ -316,13 +310,13 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
               </div>
 
               {/* Keypad */}
-              <div className="grid grid-cols-3 gap-2 max-w-[260px] mx-auto">
+              <div className="grid grid-cols-3 gap-2 max-w-[270px] mx-auto font-mono">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                   <button
                     key={digit}
                     type="button"
                     onClick={() => handleKeypadPress(digit)}
-                    className="h-11 sm:h-12 bg-slate-50 hover:bg-slate-100 active:bg-blue-100 border border-slate-200 rounded-2xl text-base sm:text-lg font-bold text-slate-800 shadow-sm transition active:scale-95 flex items-center justify-center"
+                    className="h-12 bg-[#050812] hover:bg-slate-800 active:bg-cyan-900/40 border border-slate-700 hover:border-cyan-500/50 rounded-2xl text-lg font-bold text-slate-200 shadow-md transition active:scale-95 flex items-center justify-center"
                   >
                     {digit}
                   </button>
@@ -330,75 +324,77 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
                 <button
                   type="button"
                   onClick={() => setPin('')}
-                  className="h-11 sm:h-12 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-2xl text-xs font-bold text-slate-600 transition flex items-center justify-center"
+                  className="h-12 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-2xl text-xs font-bold text-slate-400 transition flex items-center justify-center"
                 >
-                  Clear
+                  CLEAR
                 </button>
                 <button
                   type="button"
                   onClick={() => handleKeypadPress('0')}
-                  className="h-11 sm:h-12 bg-slate-50 hover:bg-slate-100 active:bg-blue-100 border border-slate-200 rounded-2xl text-base sm:text-lg font-bold text-slate-800 shadow-sm transition active:scale-95 flex items-center justify-center"
+                  className="h-12 bg-[#050812] hover:bg-slate-800 active:bg-cyan-900/40 border border-slate-700 hover:border-cyan-500/50 rounded-2xl text-lg font-bold text-slate-200 shadow-md transition active:scale-95 flex items-center justify-center"
                 >
                   0
                 </button>
                 <button
                   type="button"
                   onClick={() => setPin((prev) => prev.slice(0, -1))}
-                  className="h-11 sm:h-12 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-2xl text-slate-600 transition flex items-center justify-center"
+                  className="h-12 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-2xl text-slate-400 transition flex items-center justify-center"
                 >
-                  <Delete className="w-5 h-5" />
+                  <Delete className="w-5 h-5 text-cyan-400" />
                 </button>
               </div>
 
-              <div className="text-center pt-1">
+              <div className="text-center pt-1 font-mono">
                 <button
                   type="button"
                   onClick={() => setAuthMode('standard')}
-                  className="text-xs text-slate-500 hover:text-blue-600 font-semibold"
+                  className="text-xs text-slate-400 hover:text-cyan-400 transition"
                 >
-                  ← Switch to Username & Password
+                  ← RETURN TO OPERATOR LOGIN
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Section: OR SELECT APPLICATION */}
+        {/* Section: SELECT WORKSPACE ROUTE */}
         <div className="w-full space-y-3 pt-1">
           <div className="relative flex items-center justify-center">
-            <div className="border-t border-slate-300/80 w-full" />
-            <span className="bg-transparent px-3 text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
-              OR SELECT APPLICATION
+            <div className="border-t border-cyan-500/20 w-full" />
+            <span className="px-3 text-[10px] sm:text-[11px] font-mono font-bold text-cyan-400/80 uppercase tracking-widest whitespace-nowrap">
+              TARGET WORKSPACE ROUTING
             </span>
-            <div className="border-t border-slate-300/80 w-full" />
+            <div className="border-t border-cyan-500/20 w-full" />
           </div>
 
           {/* Two Responsive Application Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full font-mono">
             {/* 1. Production Floor Card */}
             <button
               type="button"
               onClick={() => setSelectedApp('production')}
-              className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex items-center justify-between text-left ${
+              className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between text-left ${
                 selectedApp === 'production'
-                  ? 'bg-white border-blue-600 shadow-lg shadow-blue-600/10 ring-2 ring-blue-500/20'
-                  : 'bg-white/80 hover:bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                  ? 'bg-slate-900/90 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400'
+                  : 'bg-slate-900/50 hover:bg-slate-900/80 border-slate-800 hover:border-slate-700'
               }`}
             >
               <div className="flex items-center space-x-3">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    selectedApp === 'production' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'
+                    selectedApp === 'production'
+                      ? 'bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.8)]'
+                      : 'bg-slate-800 text-cyan-400'
                   }`}
                 >
                   <Factory className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 leading-tight">Production</h3>
-                  <p className="text-[10px] text-slate-500 font-medium">Floor Lines & Tracking</p>
+                  <h3 className="text-sm font-extrabold text-white leading-tight">PRODUCTION</h3>
+                  <p className="text-[10px] text-slate-400 font-sans">Floor Lines &amp; Grid Power</p>
                 </div>
               </div>
-              <div className={`p-1 rounded-full ${selectedApp === 'production' ? 'text-blue-600' : 'text-slate-400'}`}>
+              <div className={`p-1 rounded-full ${selectedApp === 'production' ? 'text-cyan-400' : 'text-slate-600'}`}>
                 <ArrowRight className="w-4 h-4" />
               </div>
             </button>
@@ -407,98 +403,100 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
             <button
               type="button"
               onClick={() => setSelectedApp('qc')}
-              className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex items-center justify-between text-left ${
+              className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between text-left ${
                 selectedApp === 'qc'
-                  ? 'bg-white border-blue-600 shadow-lg shadow-blue-600/10 ring-2 ring-blue-500/20'
-                  : 'bg-white/80 hover:bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                  ? 'bg-slate-900/90 border-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.35)] ring-1 ring-indigo-400'
+                  : 'bg-slate-900/50 hover:bg-slate-900/80 border-slate-800 hover:border-slate-700'
               }`}
             >
               <div className="flex items-center space-x-3">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    selectedApp === 'qc' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'
+                    selectedApp === 'qc'
+                      ? 'bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.8)]'
+                      : 'bg-slate-800 text-indigo-400'
                   }`}
                 >
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 leading-tight">Quality Control</h3>
-                  <p className="text-[10px] text-slate-500 font-medium">QC Testing & Registers</p>
+                  <h3 className="text-sm font-extrabold text-white leading-tight">QUALITY GATE</h3>
+                  <p className="text-[10px] text-slate-400 font-sans">Testing &amp; Dossiers</p>
                 </div>
               </div>
-              <div className={`p-1 rounded-full ${selectedApp === 'qc' ? 'text-blue-600' : 'text-slate-400'}`}>
+              <div className={`p-1 rounded-full ${selectedApp === 'qc' ? 'text-indigo-400' : 'text-slate-600'}`}>
                 <ArrowRight className="w-4 h-4" />
               </div>
             </button>
           </div>
 
-          {/* Fast Staff Accounts (Names & Roles only — Passwords NEVER shown) */}
-          <div className="pt-2">
-            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-              <span>Quick Role Access</span>
-              <span className="text-[9px] text-blue-600 font-normal">1-Click Sign-In</span>
+          {/* Quick Operator Clearance Access (Names & Roles only — Passwords NEVER shown) */}
+          <div className="pt-2 font-mono">
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 mb-2">
+              <span>AUTHORIZED CLEARANCE PROFILES</span>
+              <span className="text-[9px] text-cyan-400">1-CLICK AUTH</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => handleFastRoleSelect('3122', 'production')}
-                className="p-2 bg-white/80 hover:bg-white border border-slate-200 rounded-xl text-left transition shadow-2xs hover:border-blue-400"
+                className="p-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition"
               >
-                <div className="font-bold text-slate-800 text-[11px] truncate">Nirav Kikani</div>
-                <div className="text-[9px] text-slate-500 truncate">Fitter • Line 1</div>
+                <div className="font-bold text-slate-200 text-[11px] truncate">Nirav Kikani</div>
+                <div className="text-[9px] text-cyan-400 truncate">FITTER // LINE 1</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleFastRoleSelect('2026', 'qc')}
-                className="p-2 bg-white/80 hover:bg-white border border-slate-200 rounded-xl text-left transition shadow-2xs hover:border-blue-400"
+                className="p-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-xl text-left transition"
               >
-                <div className="font-bold text-slate-800 text-[11px] truncate">Dipen Malli</div>
-                <div className="text-[9px] text-slate-500 truncate">QC Inspector</div>
+                <div className="font-bold text-slate-200 text-[11px] truncate">Dipen Malli</div>
+                <div className="text-[9px] text-indigo-400 truncate">QC INSPECTOR</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleFastRoleSelect('6530', 'production')}
-                className="p-2 bg-white/80 hover:bg-white border border-slate-200 rounded-xl text-left transition shadow-2xs hover:border-blue-400"
+                className="p-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition"
               >
-                <div className="font-bold text-slate-800 text-[11px] truncate">Khimji Gadhiya</div>
-                <div className="text-[9px] text-slate-500 truncate">Supervisor</div>
+                <div className="font-bold text-slate-200 text-[11px] truncate">Khimji Gadhiya</div>
+                <div className="text-[9px] text-cyan-400 truncate">SUPERVISOR</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleFastRoleSelect('3105', 'production')}
-                className="p-2 bg-white/80 hover:bg-white border border-slate-200 rounded-xl text-left transition shadow-2xs hover:border-blue-400"
+                className="p-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition"
               >
-                <div className="font-bold text-slate-800 text-[11px] truncate">Chirag Hathaliya</div>
-                <div className="text-[9px] text-slate-500 truncate">PPC Planning</div>
+                <div className="font-bold text-slate-200 text-[11px] truncate">Chirag Hathaliya</div>
+                <div className="text-[9px] text-cyan-400 truncate">PPC PLANNING</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleFastRoleSelect('2619', 'production')}
-                className="p-2 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-xl text-left transition shadow-2xs"
+                className="p-2 bg-blue-950/40 hover:bg-blue-950/70 border border-blue-500/40 rounded-xl text-left transition"
               >
-                <div className="font-bold text-blue-900 text-[11px] truncate">Admin Manager</div>
-                <div className="text-[9px] text-blue-600 truncate">Management</div>
+                <div className="font-bold text-blue-200 text-[11px] truncate">Admin Manager</div>
+                <div className="text-[9px] text-blue-400 truncate">MANAGEMENT</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleFastRoleSelect('9999', 'production')}
-                className="p-2 bg-purple-50/80 hover:bg-purple-100 border border-purple-200 rounded-xl text-left transition shadow-2xs"
+                className="p-2 bg-purple-950/40 hover:bg-purple-950/70 border border-purple-500/40 rounded-xl text-left transition"
               >
-                <div className="font-bold text-purple-900 text-[11px] truncate">Developer Master</div>
-                <div className="text-[9px] text-purple-600 truncate">Systems Engineering</div>
+                <div className="font-bold text-purple-200 text-[11px] truncate">Developer Master</div>
+                <div className="text-[9px] text-purple-400 truncate">CORE ARCHITECTURE</div>
               </button>
             </div>
           </div>
         </div>
 
         {/* Footer Attribution */}
-        <div className="text-center text-[10px] text-slate-400 font-medium pt-2">
-          Copyright © Industrial Dr. Prepared this app for Synchro Electricals Pvt. Ltd.
+        <div className="text-center text-[10px] text-slate-500 font-mono pt-2 tracking-wider">
+          SYSTEM PREPARED BY INDUSTRIAL DR. // SYNCHRO ELECTRICALS PVT. LTD.
         </div>
       </div>
     </div>

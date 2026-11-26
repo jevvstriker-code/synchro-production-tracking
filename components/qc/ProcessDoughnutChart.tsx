@@ -25,7 +25,7 @@ export function ProcessDoughnutChart({ data, onSelectStage }: ProcessDoughnutCha
 
     const labels = Object.keys(data);
     const values = Object.values(data);
-    const colors = ['#0284c7', '#1d4ed8', '#f59e0b', '#e11d48', '#8b5cf6', '#10b981', '#64748b', '#ec4899'];
+    const colors = ['#06b6d4', '#3b82f6', '#f59e0b', '#f43f5e', '#8b5cf6', '#10b981', '#64748b', '#ec4899'];
 
     chartInstance.current = new Chart(ctx, {
       type: 'doughnut',
@@ -34,9 +34,9 @@ export function ProcessDoughnutChart({ data, onSelectStage }: ProcessDoughnutCha
         datasets: [
           {
             data: values.length ? values : [0],
-            backgroundColor: values.length ? colors.slice(0, labels.length) : ['#e2e8f0'],
+            backgroundColor: values.length ? colors.slice(0, labels.length) : ['#1e293b'],
             borderWidth: 2,
-            borderColor: '#ffffff',
+            borderColor: '#0a0f1d',
           },
         ],
       },
@@ -48,10 +48,18 @@ export function ProcessDoughnutChart({ data, onSelectStage }: ProcessDoughnutCha
             position: 'right',
             labels: {
               boxWidth: 12,
-              font: { size: 11, family: 'Inter, sans-serif' },
+              color: '#94a3b8',
+              font: { size: 11, family: 'monospace' },
             },
           },
           tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#06b6d4',
+            borderWidth: 1,
+            titleFont: { family: 'monospace' },
+            bodyFont: { family: 'monospace' },
+            padding: 10,
+            cornerRadius: 8,
             callbacks: {
               label: (context) => ` ${context.label}: ${context.raw} defects`,
             },
@@ -75,10 +83,10 @@ export function ProcessDoughnutChart({ data, onSelectStage }: ProcessDoughnutCha
   }, [data, onSelectStage]);
 
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+    <div className="cyber-card p-4 sm:p-5 rounded-2xl border border-cyan-500/25 shadow-lg flex flex-col h-full">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-bold text-slate-800">Process-wise Defect Breakdown</h3>
-        <span className="text-[10px] text-slate-400 font-medium">Click slice to drill down</span>
+        <h3 className="text-sm font-bold text-white tracking-wide font-mono">Process-wise Defect Breakdown</h3>
+        <span className="text-[10px] text-cyan-400 font-mono">CLICK SLICE TO DRILL DOWN</span>
       </div>
       <div className="relative flex-grow min-h-[220px] w-full">
         <canvas ref={canvasRef} className="cursor-pointer" />
