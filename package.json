@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "backup": "node scripts/backup-db.mjs",
+    "backup:sql": "node scripts/export-sql-backup.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",

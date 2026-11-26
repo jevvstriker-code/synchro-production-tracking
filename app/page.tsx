@@ -9,6 +9,7 @@ import { PrintableJobCardModal } from '@/components/PrintableJobCardModal';
 import { PrintablePanelReportModal } from '@/components/PrintablePanelReportModal';
 import { PrintableBatchReportModal } from '@/components/PrintableBatchReportModal';
 import { AddAssemblyLineModal } from '@/components/AddAssemblyLineModal';
+import { ImportExportModal } from '@/components/ImportExportModal';
 import { LiveCameraModal } from '@/components/LiveCameraModal';
 import { LoginModal } from '@/components/LoginModal';
 import { TeamPerformanceView } from '@/components/TeamPerformanceView';
@@ -48,7 +49,8 @@ import {
   CheckSquare,
   Square,
   Factory,
-  Zap
+  Zap,
+  FileJson
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -107,6 +109,10 @@ export default function HomePage() {
 
   // Add Assembly Line Modal
   const [isAddLineModalOpen, setIsAddLineModalOpen] = useState<boolean>(false);
+
+  // Backup & JSON Import/Export Modal
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState<boolean>(false);
+  const [importExportTab, setImportExportTab] = useState<'export' | 'import'>('export');
 
   // Reports Tab Filters
   const [reportsFilterLine, setReportsFilterLine] = useState<string>('all');
@@ -346,6 +352,10 @@ export default function HomePage() {
           setActiveTab={setActiveTab}
           openScanner={() => setIsScannerOpen(true)}
           openLoginModal={() => setIsLoginModalOpen(true)}
+          openImportExportModal={() => {
+            setImportExportTab('export');
+            setIsImportExportModalOpen(true);
+          }}
         />
 
         {/* Main Container */}
@@ -1189,6 +1199,18 @@ export default function HomePage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
+                      onClick={() => {
+                        setImportExportTab('export');
+                        setIsImportExportModalOpen(true);
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-md transition flex items-center space-x-1.5"
+                      title="Export or Import full application database as JSON"
+                    >
+                      <FileJson className="w-4 h-4" />
+                      <span>Backup / JSON Transfer</span>
+                    </button>
+
+                    <button
                       onClick={() =>
                         handleOpenBatchReport(
                           selectedPanelIds.size > 0
@@ -1566,6 +1588,14 @@ export default function HomePage() {
         onClose={() => setIsAddLineModalOpen(false)}
         onSuccess={loadAllData}
         existingCount={assemblyLines.length}
+      />
+
+      {/* 9. Database Backup & JSON Import/Export Modal */}
+      <ImportExportModal
+        isOpen={isImportExportModalOpen}
+        onClose={() => setIsImportExportModalOpen(false)}
+        onSuccess={loadAllData}
+        initialTab={importExportTab}
       />
     </div>
   );

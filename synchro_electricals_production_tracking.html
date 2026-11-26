@@ -89,8 +89,12 @@
                 </button>
             </nav>
 
-            <!-- Quick Action / Scanner -->
-            <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+            <!-- Quick Action / Scanner & Backup -->
+            <div class="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
+                <button onclick="openBackupJsonModal()" class="bg-blue-700 hover:bg-blue-800 text-white px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold border border-blue-500 shadow transition flex items-center space-x-1.5" title="Backup & JSON Import/Export">
+                    <i class="fa-solid fa-file-code text-blue-200"></i>
+                    <span class="hidden md:inline">Backup / JSON</span>
+                </button>
                 <button onclick="openLiveCameraScannerModal()" class="bg-white hover:bg-blue-50 text-blue-700 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition flex items-center space-x-1.5 sm:space-x-2">
                     <i class="fa-solid fa-camera"></i>
                     <span>Scan QR</span>
@@ -103,6 +107,7 @@
         </div>
         <!-- Mobile Navigation Sub-bar -->
         <div class="md:hidden flex overflow-x-auto px-3 py-2 bg-blue-700 border-t border-blue-500 space-x-1.5 shadow-inner">
+            <button onclick="openBackupJsonModal()" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-indigo-700"><i class="fa-solid fa-file-code mr-1"></i>Backup / JSON</button>
             <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap bg-white text-blue-700">Dashboard</button>
             <button onclick="switchTab('qr-generator')" id="mob-nav-qr-generator" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Job Card</button>
             <button onclick="switchTab('assembly-lines')" id="mob-nav-assembly-lines" class="mob-tab-btn px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap text-white bg-blue-800">Lines</button>
@@ -790,6 +795,141 @@
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-xs font-medium shadow">Save Rework Log</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Backup & JSON Transfer Modal -->
+    <div id="modal-backup-json" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 text-white p-5 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-white/20 rounded-xl text-white">
+                        <i class="fa-solid fa-file-code text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold">Database Backup & JSON Transfer</h3>
+                        <p class="text-xs text-blue-100">Export snapshot or manually import JSON production records</p>
+                    </div>
+                </div>
+                <button onclick="closeBackupJsonModal()" class="text-white/80 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex border-b border-slate-200 bg-slate-50 px-5 pt-3 gap-2 shrink-0">
+                <button onclick="switchBackupTab('export')" id="btn-backup-tab-export" class="px-4 py-2 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-blue-600 bg-white text-blue-700 shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-download"></i><span>Export Data (JSON)</span>
+                </button>
+                <button onclick="switchBackupTab('import')" id="btn-backup-tab-import" class="px-4 py-2 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-upload"></i><span>Import Data (JSON)</span>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-5 overflow-y-auto space-y-5 text-slate-800 flex-1">
+                <!-- EXPORT SECTION -->
+                <div id="backup-sec-export" class="space-y-4">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <span class="font-bold text-sm text-blue-950 flex items-center space-x-1.5">
+                                <span>One-Click Full Production Backup</span>
+                                <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">JSON</span>
+                            </span>
+                            <p class="text-xs text-blue-800">
+                                Downloads all active Job Cards, 11 Stage logs, Rework logs, and Audit Trail entries into a standardized JSON file.
+                            </p>
+                        </div>
+                        <button onclick="exportAppStateToJson()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow transition flex items-center justify-center space-x-2 shrink-0">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Download Backup (.json)</span>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Live Local Record Summary</h4>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                                <div id="backup-count-cards" class="text-lg font-bold text-blue-700 font-mono">0</div>
+                                <div class="text-[11px] font-semibold text-slate-600">Job Cards</div>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                                <div id="backup-count-reworks" class="text-lg font-bold text-amber-700 font-mono">0</div>
+                                <div class="text-[11px] font-semibold text-slate-600">Rework Logs</div>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                                <div id="backup-count-audits" class="text-lg font-bold text-purple-700 font-mono">0</div>
+                                <div class="text-[11px] font-semibold text-slate-600">Audit Logs</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IMPORT SECTION -->
+                <div id="backup-sec-import" class="space-y-4 hidden">
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 flex items-start space-x-2.5">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                        <p>Upload a JSON file exported from this app. You can safely merge new records or replace existing data.</p>
+                    </div>
+
+                    <!-- File input box -->
+                    <div onclick="document.getElementById('backup-file-input').click()" class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-2xl p-6 text-center cursor-pointer transition">
+                        <input type="file" id="backup-file-input" accept=".json,application/json" onchange="handleImportFileSelect(event)" class="hidden">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fa-solid fa-upload text-xl"></i>
+                        </div>
+                        <h4 id="import-file-name" class="font-bold text-sm text-slate-800">Select JSON backup file to import</h4>
+                        <p class="text-xs text-slate-500 mt-1">Supports standard Synchro Production .json backup packages</p>
+                    </div>
+
+                    <!-- Validation Box -->
+                    <div id="import-preview-box" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2 text-xs">
+                        <div class="flex items-center space-x-2 text-emerald-800 font-bold">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                            <span id="import-status-text">Valid Backup Package Detected</span>
+                        </div>
+                        <div class="text-slate-600" id="import-stats-summary">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Mode Select -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">Import Mode:</label>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <label class="border border-blue-400 bg-blue-50 p-3 rounded-xl cursor-pointer flex flex-col justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <input type="radio" name="htmlImportMode" value="merge" checked class="text-blue-600">
+                                    <span class="font-bold text-blue-900">Merge & Upsert</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 mt-1">Updates matching Job Cards & adds new records safely.</span>
+                            </label>
+                            <label class="border border-slate-200 bg-white p-3 rounded-xl cursor-pointer flex flex-col justify-between hover:border-slate-300">
+                                <div class="flex items-center space-x-2">
+                                    <input type="radio" name="htmlImportMode" value="replace" class="text-blue-600">
+                                    <span class="font-bold text-red-700">Replace All</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 mt-1">Overwrites local database with the JSON file contents.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Import button -->
+                    <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+                        <button type="button" onclick="closeBackupJsonModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold">Cancel</button>
+                        <button type="button" id="btn-do-import" onclick="executeHtmlImport()" disabled class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow transition disabled:opacity-40">
+                            Apply Import
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-slate-50 border-t border-slate-200 px-5 py-3 flex items-center justify-between text-xs text-slate-500 shrink-0">
+                <span>Format: UTF-8 JSON</span>
+                <button onclick="closeBackupJsonModal()" class="px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg font-semibold hover:bg-slate-100">Close</button>
+            </div>
         </div>
     </div>
 
@@ -2084,6 +2224,178 @@
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 3500);
+        }
+
+        // ================= BACKUP & JSON IMPORT / EXPORT =================
+        let pendingImportData = null;
+
+        function openBackupJsonModal() {
+            document.getElementById('backup-count-cards').innerText = appState.jobCards ? appState.jobCards.length : 0;
+            document.getElementById('backup-count-reworks').innerText = appState.reworkLogs ? appState.reworkLogs.length : 0;
+            document.getElementById('backup-count-audits').innerText = appState.auditTrail ? appState.auditTrail.length : 0;
+            switchBackupTab('export');
+            document.getElementById('modal-backup-json').classList.remove('hidden');
+        }
+
+        function closeBackupJsonModal() {
+            document.getElementById('modal-backup-json').classList.add('hidden');
+            pendingImportData = null;
+        }
+
+        function switchBackupTab(tab) {
+            const btnExp = document.getElementById('btn-backup-tab-export');
+            const btnImp = document.getElementById('btn-backup-tab-import');
+            const secExp = document.getElementById('backup-sec-export');
+            const secImp = document.getElementById('backup-sec-import');
+
+            if (tab === 'export') {
+                secExp.classList.remove('hidden');
+                secImp.classList.add('hidden');
+                btnExp.className = "px-4 py-2 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-blue-600 bg-white text-blue-700 shadow-sm flex items-center space-x-2";
+                btnImp.className = "px-4 py-2 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2";
+            } else {
+                secExp.classList.add('hidden');
+                secImp.classList.remove('hidden');
+                btnImp.className = "px-4 py-2 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-blue-600 bg-white text-blue-700 shadow-sm flex items-center space-x-2";
+                btnExp.className = "px-4 py-2 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2";
+            }
+        }
+
+        function exportAppStateToJson() {
+            const now = new Date();
+            const dateStr = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const exportPkg = {
+                appName: "Synchro Production Tracking",
+                version: "1.0",
+                exportedAt: now.toISOString(),
+                summary: {
+                    totalJobCards: appState.jobCards.length,
+                    totalReworkLogs: appState.reworkLogs ? appState.reworkLogs.length : 0,
+                    totalAuditLogs: appState.auditTrail ? appState.auditTrail.length : 0
+                },
+                tables: {
+                    job_cards: appState.jobCards,
+                    rework_logs: appState.reworkLogs || [],
+                    audit_trail: appState.auditTrail || []
+                },
+                jobCards: appState.jobCards,
+                reworkLogs: appState.reworkLogs || [],
+                auditTrail: appState.auditTrail || []
+            };
+
+            const jsonStr = JSON.stringify(exportPkg, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `synchro_production_backup_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast("Backup downloaded as JSON successfully!", "success");
+        }
+
+        function handleImportFileSelect(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('import-file-name').innerText = file.name + ` (${(file.size/1024).toFixed(1)} KB)`;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    let detectedCards = [];
+                    let detectedRework = [];
+                    let detectedAudit = [];
+
+                    if (Array.isArray(parsed)) {
+                        detectedCards = parsed;
+                    } else if (parsed.tables && parsed.tables.job_cards) {
+                        detectedCards = parsed.tables.job_cards;
+                        detectedRework = parsed.tables.rework_logs || [];
+                        detectedAudit = parsed.tables.audit_trail || [];
+                    } else if (parsed.jobCards) {
+                        detectedCards = parsed.jobCards;
+                        detectedRework = parsed.reworkLogs || [];
+                        detectedAudit = parsed.auditTrail || [];
+                    }
+
+                    if (detectedCards.length === 0 && detectedRework.length === 0) {
+                        alert("No valid Job Cards or records found in this JSON file.");
+                        return;
+                    }
+
+                    pendingImportData = {
+                        jobCards: detectedCards,
+                        reworkLogs: detectedRework,
+                        auditTrail: detectedAudit
+                    };
+
+                    const previewBox = document.getElementById('import-preview-box');
+                    const statsSummary = document.getElementById('import-stats-summary');
+                    previewBox.classList.remove('hidden');
+                    statsSummary.innerHTML = `<strong>${detectedCards.length}</strong> Job Cards, <strong>${detectedRework.length}</strong> Rework logs, <strong>${detectedAudit.length}</strong> Audit logs ready to import.`;
+                    document.getElementById('btn-do-import').disabled = false;
+
+                } catch(err) {
+                    alert("Invalid JSON format: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function executeHtmlImport() {
+            if (!pendingImportData) {
+                alert("Please select a valid JSON backup file first.");
+                return;
+            }
+
+            const modes = document.getElementsByName('htmlImportMode');
+            let selectedMode = 'merge';
+            for (const r of modes) {
+                if (r.checked) selectedMode = r.value;
+            }
+
+            if (selectedMode === 'replace') {
+                if (!confirm("Are you sure you want to replace all current data with the contents of this JSON file?")) {
+                    return;
+                }
+                appState.jobCards = pendingImportData.jobCards || [];
+                if (pendingImportData.reworkLogs && pendingImportData.reworkLogs.length > 0) {
+                    appState.reworkLogs = pendingImportData.reworkLogs;
+                }
+                if (pendingImportData.auditTrail && pendingImportData.auditTrail.length > 0) {
+                    appState.auditTrail = pendingImportData.auditTrail;
+                }
+            } else {
+                // Merge & Upsert
+                pendingImportData.jobCards.forEach(newJc => {
+                    const idx = appState.jobCards.findIndex(j => (j.jobCardNo && j.jobCardNo === newJc.jobCardNo) || (j.id && j.id === newJc.id));
+                    if (idx >= 0) {
+                        appState.jobCards[idx] = newJc;
+                    } else {
+                        appState.jobCards.unshift(newJc);
+                    }
+                });
+
+                if (pendingImportData.reworkLogs) {
+                    pendingImportData.reworkLogs.forEach(r => {
+                        appState.reworkLogs.unshift(r);
+                    });
+                }
+                if (pendingImportData.auditTrail) {
+                    pendingImportData.auditTrail.forEach(a => {
+                        appState.auditTrail.unshift(a);
+                    });
+                }
+            }
+
+            saveToLocalStorage();
+            renderAll();
+            closeBackupJsonModal();
+            showToast(`Imported ${pendingImportData.jobCards.length} records successfully!`, "success");
         }
     </script>
 </body>

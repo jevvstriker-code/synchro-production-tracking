@@ -9,6 +9,7 @@ import { stageLogService } from '@/services/stageLogService';
 import { AppUser, UserRole, AuditTrail, JobCard, StageLog, AssemblyLine, PRODUCTION_STAGES } from '@/types';
 import { assemblyLineService } from '@/services/assemblyLineService';
 import { AddAssemblyLineModal } from '@/components/AddAssemblyLineModal';
+import { ImportExportModal } from '@/components/ImportExportModal';
 import {
   Settings,
   Users,
@@ -29,7 +30,12 @@ import {
   Lock,
   Edit3,
   Factory,
-  Plus
+  Plus,
+  FileJson,
+  Download,
+  Upload,
+  HardDriveDownload,
+  HardDriveUpload
 } from 'lucide-react';
 
 export function AdminPortalView() {
@@ -40,8 +46,10 @@ export function AdminPortalView() {
   const [assemblyLines, setAssemblyLines] = useState<AssemblyLine[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userSearch, setUserSearch] = useState<string>('');
-  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'lines' | 'audit' | 'timestamps' | 'system'>('users');
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'lines' | 'audit' | 'timestamps' | 'system' | 'backup'>('users');
   const [isAddLineModalOpen, setIsAddLineModalOpen] = useState<boolean>(false);
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState<boolean>(false);
+  const [importExportTab, setImportExportTab] = useState<'export' | 'import'>('export');
 
   // Add / Edit User Modal state
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
@@ -312,6 +320,17 @@ export function AdminPortalView() {
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
+            onClick={() => {
+              setImportExportTab('export');
+              setIsImportExportModalOpen(true);
+            }}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5"
+            title="Backup and JSON Import/Export"
+          >
+            <FileJson className="w-4 h-4" />
+            <span>JSON Backup / Restore</span>
+          </button>
+          <button
             onClick={handleOpenAddUser}
             className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5"
           >
@@ -366,6 +385,17 @@ export function AdminPortalView() {
         >
           <ShieldCheck className="w-4 h-4" />
           <span>Security & Activity Audit ({auditLogs.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminTab('backup')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 ${
+            activeAdminTab === 'backup'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100'
+          }`}
+        >
+          <HardDriveDownload className="w-4 h-4 text-indigo-600" />
+          <span>Backup & Restore (JSON)</span>
         </button>
         <button
           onClick={() => setActiveAdminTab('system')}
@@ -821,6 +851,123 @@ export function AdminPortalView() {
         </div>
       )}
 
+      {/* Tab: Data Backup & JSON Transfer */}
+      {activeAdminTab === 'backup' && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 flex items-center space-x-2">
+                <HardDriveDownload className="w-5 h-5 text-indigo-600" />
+                <span>Database Backup & JSON Data Portability</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Take comprehensive snapshots of currently working data or import external JSON datasets into PostgreSQL.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  setImportExportTab('export');
+                  setIsImportExportModalOpen(true);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center space-x-1.5"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export JSON</span>
+              </button>
+              <button
+                onClick={() => {
+                  setImportExportTab('import');
+                  setIsImportExportModalOpen(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center space-x-1.5"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Import JSON</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Action Tiles */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-gradient-to-br from-indigo-50/80 to-blue-50/50 border border-indigo-200/80 rounded-2xl space-y-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900">Database JSON Export</h4>
+                  <p className="text-[11px] text-slate-500">Download snapshot of all active tables</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Generates a standardized JSON backup with metadata, timestamp, and table records for Job Cards, Stage Logs, Staff, Assembly Lines, and Audit logs.
+              </p>
+              <button
+                onClick={() => {
+                  setImportExportTab('export');
+                  setIsImportExportModalOpen(true);
+                }}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold shadow transition flex items-center justify-center space-x-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Launch Export Console</span>
+              </button>
+            </div>
+
+            <div className="p-4 bg-gradient-to-br from-blue-50/80 to-slate-50 border border-blue-200/80 rounded-2xl space-y-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900">Database JSON Import</h4>
+                  <p className="text-[11px] text-slate-500">Restore or load data from JSON files</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Upload a JSON backup or dataset. Supports safe Merge & Upsert, Append Only, or Clean Replace with foreign key dependency ordering.
+              </p>
+              <button
+                onClick={() => {
+                  setImportExportTab('import');
+                  setIsImportExportModalOpen(true);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-xs font-bold shadow transition flex items-center justify-center space-x-1.5"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Launch Import Console</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Current Database Summary Grid */}
+          <div className="space-y-2">
+            <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">
+              Current Live Database Table Record Counts
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-lg font-extrabold text-blue-700 font-mono">{jobCards.length}</div>
+                <div className="text-[11px] font-semibold text-slate-600">Job Cards / Panels</div>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-lg font-extrabold text-indigo-700 font-mono">{assemblyLines.length}</div>
+                <div className="text-[11px] font-semibold text-slate-600">Assembly Lines</div>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-lg font-extrabold text-purple-700 font-mono">{users.length}</div>
+                <div className="text-[11px] font-semibold text-slate-600">Staff Accounts</div>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <div className="text-lg font-extrabold text-slate-800 font-mono">{auditLogs.length}</div>
+                <div className="text-[11px] font-semibold text-slate-600">Audit Logs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab 4: System / Database Info */}
       {activeAdminTab === 'system' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
@@ -974,6 +1121,14 @@ export function AdminPortalView() {
         onClose={() => setIsAddLineModalOpen(false)}
         onSuccess={loadData}
         existingCount={assemblyLines.length}
+      />
+
+      {/* Database Backup & JSON Import/Export Modal */}
+      <ImportExportModal
+        isOpen={isImportExportModalOpen}
+        onClose={() => setIsImportExportModalOpen(false)}
+        onSuccess={loadData}
+        initialTab={importExportTab}
       />
     </div>
   );

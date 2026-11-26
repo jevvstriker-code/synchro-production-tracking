@@ -14,7 +14,9 @@ import {
   Settings,
   Camera,
   LogOut,
-  UserCheck
+  UserCheck,
+  FileJson,
+  HardDriveDownload
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -22,9 +24,10 @@ interface NavbarProps {
   setActiveTab: (tab: string) => void;
   openScanner: () => void;
   openLoginModal: () => void;
+  openImportExportModal?: () => void;
 }
 
-export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal }: NavbarProps) {
+export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal, openImportExportModal }: NavbarProps) {
   const { currentUser, isLoggedIn, logout } = useAuth();
 
   const navItems = [
@@ -79,8 +82,19 @@ export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal }:
           })}
         </nav>
 
-        {/* Quick Action / Scanner & Auth */}
-        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        {/* Quick Action / Scanner, Backup & Auth */}
+        <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0">
+          {openImportExportModal && (
+            <button
+              onClick={openImportExportModal}
+              className="bg-blue-700 hover:bg-blue-800 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold border border-blue-500 shadow transition flex items-center space-x-1.5"
+              title="Backup and JSON Import/Export"
+            >
+              <FileJson className="w-4 h-4 text-blue-200" />
+              <span className="hidden sm:inline">Backup / JSON</span>
+            </button>
+          )}
+
           <button
             onClick={openScanner}
             className="bg-white hover:bg-blue-50 text-blue-700 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow transition flex items-center space-x-1.5"
