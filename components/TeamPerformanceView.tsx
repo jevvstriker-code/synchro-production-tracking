@@ -101,6 +101,7 @@ export function TeamPerformanceView() {
   const comparisonChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false as const,
     plugins: {
       legend: {
         position: 'top' as const,

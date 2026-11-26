@@ -13,31 +13,53 @@ interface StageBarChartProps {
 export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart | null>(null);
+  const onSelectStageRef = useRef(onSelectStage);
+  onSelectStageRef.current = onSelectStage;
 
   useEffect(() => {
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    if (chartInstance.current) {
-      chartInstance.current.destroy();
-    }
-
     const labels = Object.keys(data);
     const values = Object.values(data);
+    const resolvedLabels = labels.length ? labels : ['No Data'];
+    const resolvedValues = values.length ? values : [0];
 
-    const backgroundColors = labels.map((l) =>
+    const backgroundColors = resolvedLabels.map((l) =>
       l.includes('(Acc)') ? '#10b981' : l.includes('(Rej/Rew)') ? '#f43f5e' : '#2563eb'
     );
 
+    // If chart already exists, update data quietly with ZERO animation to prevent twitching/bouncing
+    if (chartInstance.current) {
+      const currentLabels = chartInstance.current.data.labels || [];
+      const currentValues = (chartInstance.current.data.datasets[0]?.data as number[]) || [];
+
+      const isUnchanged =
+        currentLabels.length === resolvedLabels.length &&
+        resolvedLabels.every((l, i) => l === currentLabels[i]) &&
+        resolvedValues.every((v, i) => v === currentValues[i]);
+
+      if (isUnchanged) return;
+
+      chartInstance.current.data.labels = resolvedLabels;
+      if (chartInstance.current.data.datasets[0]) {
+        chartInstance.current.data.datasets[0].data = resolvedValues;
+        chartInstance.current.data.datasets[0].backgroundColor = backgroundColors;
+      }
+      chartInstance.current.update('none'); // Silent update without animation
+      return;
+    }
+
+    // Initial chart creation with animations disabled to prevent periodic bar growth on sync
     chartInstance.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels.length ? labels : ['No Data'],
+        labels: resolvedLabels,
         datasets: [
           {
             label: 'Inspected Items',
-            data: values.length ? values : [0],
+            data: resolvedValues,
             backgroundColor: backgroundColors,
             borderRadius: 6,
           },
@@ -46,6 +68,7 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false, // Prevents annoying re-render bar growth during auto-sync
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -72,7 +95,7 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
           if (activeEls.length > 0) {
             const index = activeEls[0].index;
             const stageLabel = labels[index];
-            if (stageLabel) onSelectStage(stageLabel);
+            if (stageLabel && onSelectStageRef.current) onSelectStageRef.current(stageLabel);
           }
         },
       },
@@ -81,9 +104,10 @@ export function StageBarChart({ data, onSelectStage }: StageBarChartProps) {
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
+        chartInstance.current = null;
       }
     };
-  }, [data, onSelectStage]);
+  }, [data]);
 
   return (
     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col h-full">

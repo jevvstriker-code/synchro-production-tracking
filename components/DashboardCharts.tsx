@@ -68,6 +68,7 @@ export function DashboardCharts({
   const delayChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false as const,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -122,6 +123,7 @@ export function DashboardCharts({
   const velocityChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false as const,
     plugins: {
       legend: { display: false },
       tooltip: {
