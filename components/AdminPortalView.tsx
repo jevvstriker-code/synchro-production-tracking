@@ -578,7 +578,6 @@ export function AdminPortalView() {
                   <th className="py-3 px-4">Username</th>
                   <th className="py-3 px-4">Role & Dept</th>
                   <th className="py-3 px-4">Mobile PIN</th>
-                  <th className="py-3 px-4">Password</th>
                   <th className="py-3 px-4">Manager Approval Rule</th>
                   <th className="py-3 px-4">Allowed Views</th>
                   <th className="py-3 px-4">Status</th>
@@ -623,9 +622,6 @@ export function AdminPortalView() {
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-blue-700">
                         {u.pin_code}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-500">
-                        {u.password ? '••••••' : '(PIN)'}
                       </td>
                       <td className="py-3 px-4">
                         {u.role === 'admin' || u.role === 'developer' ? (
@@ -1504,7 +1500,7 @@ export function AdminPortalView() {
                     Password / Secret {editingUserId && '(leave empty to keep current)'}
                   </label>
                   <input
-                    type="text"
+                    type="password"
                     placeholder="••••••••"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}

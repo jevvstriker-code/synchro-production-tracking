@@ -17,6 +17,7 @@ import { AdminPortalView } from '@/components/AdminPortalView';
 import { ElectricCurrentTracker } from '@/components/ElectricCurrentTracker';
 import { OpeningSplashAnimation } from '@/components/OpeningSplashAnimation';
 import { WelcomeCelebrationModal } from '@/components/WelcomeCelebrationModal';
+import { OperationsPortalGateway } from '@/components/OperationsPortalGateway';
 import { QCManagementView } from '@/components/qc/QCManagementView';
 
 import { jobCardService } from '@/services/jobCardService';
@@ -470,20 +471,37 @@ export default function HomePage() {
     );
   });
 
+  // If not logged in, render the dedicated Operations Portal Gateway Screen
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col antialiased text-slate-800">
+        {/* 0. Opening Splash Animation */}
+        {animationsEnabled && showSplash && (
+          <OpeningSplashAnimation
+            onFinish={() => {
+              setShowSplash(false);
+            }}
+          />
+        )}
+
+        {/* 0.1 Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
+        {welcomeModalData && (
+          <WelcomeCelebrationModal
+            user={welcomeModalData.user}
+            mode={welcomeModalData.mode}
+            quote={welcomeModalData.quote}
+            onFinish={dismissWelcomeModal}
+          />
+        )}
+
+        {/* Dedicated Operations Portal Gateway Screen matching user design */}
+        <OperationsPortalGateway onSuccess={loadAllData} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col antialiased text-slate-800">
-      {/* 0. Opening Splash Animation without lag */}
-      {animationsEnabled && showSplash && (
-        <OpeningSplashAnimation
-          onFinish={() => {
-            setShowSplash(false);
-            if (!isLoggedIn) {
-              setIsLoginModalOpen(true);
-            }
-          }}
-        />
-      )}
-
       {/* 0.1 Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
       {welcomeModalData && (
         <WelcomeCelebrationModal
