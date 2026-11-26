@@ -27,6 +27,7 @@ interface AuthContextType {
   isFitter: boolean;
   isQCInspector: boolean;
   isDashboardViewer: boolean;
+  canViewQC: boolean;
   canView: (module: string) => boolean;
   requiresApproval: () => boolean;
   loginWithPin: (pin: string, requestedMode?: 'production' | 'qc') => Promise<AppUser | null>;

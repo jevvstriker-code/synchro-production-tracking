@@ -27,6 +27,7 @@ import { auditService } from '@/services/auditService';
 import { analyticsService } from '@/services/analyticsService';
 import { assemblyLineService } from '@/services/assemblyLineService';
 import { approvalService } from '@/services/approvalService';
+import { supabase } from '@/lib/supabase/client';
 import { JobCard, StageLog, ReworkLog, AuditTrail, AssemblyLine, PRODUCTION_STAGES, ASSEMBLY_LINES } from '@/types';
 
 import {
@@ -179,8 +180,9 @@ export default function HomePage() {
   const [formPpcName, setFormPpcName] = useState<string>('Rajesh Sharma');
   const [formSupName, setFormSupName] = useState<string>('Amit Verma');
 
-  // Load all data
-  const loadAllData = useCallback(async () => {
+  // Load all data with optional silent background refresh
+  const loadAllData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
     try {
       const activeStart = isProdCustomDate ? prodStartDate : undefined;
       const activeEnd = isProdCustomDate ? prodEndDate : undefined;
@@ -199,13 +201,51 @@ export default function HomePage() {
     } catch (e) {
       console.error('Failed to load application data', e);
     } finally {
-      setIsLoading(false);
+      if (!isSilent) setIsLoading(false);
     }
   }, [prodPeriod, prodStartDate, prodEndDate, isProdCustomDate]);
 
+  // Initial load
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
+
+  // Real-time synchronization across devices (Laptop & Mobile):
+  // 1) 3-second silent background poller ensures instant updates without refreshing page
+  // 2) Supabase Realtime WebSocket subscription for live push
+  useEffect(() => {
+    const timer = setInterval(() => {
+      loadAllData(true);
+    }, 3000);
+
+    const channel = supabase
+      .channel('synchro-floor-sync')
+      .on('postgres_changes', { event: '*', schema: 'synchro_production_tracking', table: 'job_cards' }, () => {
+        loadAllData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'synchro_production_tracking', table: 'stage_logs' }, () => {
+        loadAllData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'synchro_production_tracking', table: 'approval_requests' }, () => {
+        loadAllData(true);
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [loadAllData]);
+
+  // Fitter Role Access Restriction:
+  // If a fitter logs in without admin dashboard approval, redirect them directly to Assembly Lines
+  useEffect(() => {
+    if (currentUser?.role === 'fitter') {
+      if (!canView('dashboard') && activeTab === 'dashboard') {
+        setActiveTab('assembly-lines');
+      }
+    }
+  }, [currentUser, activeTab, canView]);
 
   // Open Stage Wizard for a panel
   const handleOpenWizard = async (jobCardNo: string) => {

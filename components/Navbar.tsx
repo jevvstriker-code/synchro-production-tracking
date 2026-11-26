@@ -33,13 +33,13 @@ interface NavbarProps {
 }
 
 export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal, openImportExportModal }: NavbarProps) {
-  const { currentUser, isLoggedIn, logout, isAdmin, isDeveloper, canView, portalMode, setPortalMode } = useAuth();
+  const { currentUser, isLoggedIn, logout, isAdmin, isDeveloper, isFitter, canViewQC, canView, portalMode, setPortalMode } = useAuth();
 
   // Audit trail moved inside Admin Portal
   const allNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'qr-generator', label: 'Job Card & QR', icon: QrCode },
     { id: 'assembly-lines', label: 'Assembly Lines', icon: Layers },
+    { id: 'qr-generator', label: 'Job Card & QR', icon: QrCode },
     { id: 'rework-register', label: 'Rework', icon: AlertTriangle },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'team-performance', label: 'Team Performance', icon: Users },
@@ -88,39 +88,51 @@ export function Navbar({ activeTab, setActiveTab, openScanner, openLoginModal, o
 
         {/* Center: Mode Switcher (Isolated container - never overlaps logo) */}
         <div className="flex items-center justify-center shrink-0">
-          <div className="flex items-center bg-blue-700/80 p-1 rounded-2xl border border-blue-500/60 shadow-inner text-xs">
-            {/* Production Mode Button */}
-            <button
-              onClick={() => {
-                setPortalMode('production');
-                setActiveTab('dashboard');
-              }}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all text-xs ${
-                portalMode === 'production'
-                  ? 'bg-white text-blue-700 shadow-sm'
-                  : 'text-blue-100 hover:text-white hover:bg-blue-600/50'
-              }`}
-            >
-              <Factory className="w-3.5 h-3.5" />
-              <span className="tracking-wide">Production</span>
-            </button>
+          {canViewQC ? (
+            <div className="flex items-center bg-blue-700/80 p-1 rounded-2xl border border-blue-500/60 shadow-inner text-xs">
+              {/* Production Mode Button */}
+              <button
+                onClick={() => {
+                  setPortalMode('production');
+                  setActiveTab('dashboard');
+                }}
+                className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all text-xs ${
+                  portalMode === 'production'
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'text-blue-100 hover:text-white hover:bg-blue-600/50'
+                }`}
+              >
+                <Factory className="w-3.5 h-3.5" />
+                <span className="tracking-wide">Production</span>
+              </button>
 
-            {/* QC Mode Button */}
-            <button
-              onClick={() => {
-                setPortalMode('qc');
-                setActiveTab('qc-management');
-              }}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all text-xs ${
-                portalMode === 'qc'
-                  ? 'bg-white text-blue-700 shadow-sm'
-                  : 'text-blue-100 hover:text-white hover:bg-blue-600/50'
-              }`}
-            >
-              <Microscope className="w-3.5 h-3.5" />
-              <span className="tracking-wide">QC Inspection</span>
-            </button>
-          </div>
+              {/* QC Mode Button */}
+              <button
+                onClick={() => {
+                  setPortalMode('qc');
+                  setActiveTab('qc-management');
+                }}
+                className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all text-xs ${
+                  portalMode === 'qc'
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'text-blue-100 hover:text-white hover:bg-blue-600/50'
+                }`}
+              >
+                <Microscope className="w-3.5 h-3.5" />
+                <span className="tracking-wide">QC Inspection</span>
+              </button>
+            </div>
+          ) : isFitter ? (
+            <div className="flex items-center space-x-1.5 bg-blue-700/90 px-3 sm:px-4 py-1.5 rounded-2xl border border-blue-500/60 shadow-inner text-xs font-bold text-white">
+              <Factory className="w-3.5 h-3.5 text-blue-200" />
+              <span>Shop Floor Station</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1.5 bg-blue-700/80 px-3 py-1.5 rounded-2xl border border-blue-500/60 text-xs font-bold text-white">
+              <Factory className="w-3.5 h-3.5 text-blue-200" />
+              <span>Production Flow</span>
+            </div>
+          )}
         </div>
 
         {/* Desktop Navigation Tabs (when in Production Mode and screen is wide) */}

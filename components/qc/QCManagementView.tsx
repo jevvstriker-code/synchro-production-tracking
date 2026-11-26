@@ -79,9 +79,9 @@ export function QCManagementView() {
   const [registerStatusFilter, setRegisterStatusFilter] = useState<string>('all');
   const [allRegisters, setAllRegisters] = useState<{ qcRecords: any[]; reworks: any[] }>({ qcRecords: [], reworks: [] });
 
-  // Load Dashboard Data
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
+  // Load Dashboard Data with optional silent background refresh
+  const loadData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
     try {
       const activeStart = isCustomDate ? startDate : undefined;
       const activeEnd = isCustomDate ? endDate : undefined;
@@ -96,12 +96,17 @@ export function QCManagementView() {
     } catch (e) {
       console.error('Error loading QC metrics', e);
     } finally {
-      setIsLoading(false);
+      if (!isSilent) setIsLoading(false);
     }
   }, [period, isCustomDate, startDate, endDate]);
 
   useEffect(() => {
     loadData();
+    // 3-second live sync for QC Inspection floor
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [loadData]);
 
   // Set default inspector name from logged-in user
@@ -294,7 +299,7 @@ export function QCManagementView() {
 
         <div className="flex items-center space-x-2">
           <button
-            onClick={loadData}
+            onClick={() => loadData()}
             className="p-2.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 shadow-xs transition"
             title="Refresh QC Metrics"
           >
@@ -457,7 +462,7 @@ export function QCManagementView() {
             />
           </div>
           <button
-            onClick={loadData}
+            onClick={() => loadData()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl font-semibold shadow-xs transition"
           >
             Apply Filter

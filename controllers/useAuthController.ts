@@ -44,13 +44,29 @@ export function useAuthController() {
 
   useEffect(() => {
     try {
-      // Do not automate login on app open - always require login when app reopens
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      sessionStorage.removeItem(AUTH_STORAGE_KEY);
-
-      const storedMode = localStorage.getItem(PORTAL_MODE_KEY) as 'production' | 'qc' | null;
-      if (storedMode) {
-        setPortalModeState(storedMode);
+      // 1. Session persistence for active browser tab:
+      // When page is refreshed (F5), sessionStorage persists so user is NOT logged out!
+      // When browser tab is completely closed and reopened, sessionStorage is cleared so fresh login is required.
+      const storedUser = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      if (storedUser) {
+        try {
+          const user: AppUser = JSON.parse(storedUser);
+          setCurrentUser(user);
+          // If fitter, force production mode
+          if (user.role === 'fitter') {
+            setPortalModeState('production');
+          } else {
+            const storedMode = (sessionStorage.getItem(PORTAL_MODE_KEY) || localStorage.getItem(PORTAL_MODE_KEY)) as 'production' | 'qc' | null;
+            if (storedMode) setPortalModeState(storedMode);
+          }
+        } catch {
+          sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        }
+      } else {
+        const storedMode = localStorage.getItem(PORTAL_MODE_KEY) as 'production' | 'qc' | null;
+        if (storedMode) {
+          setPortalModeState(storedMode);
+        }
       }
 
       const storedAnim = localStorage.getItem(ANIMATION_STORAGE_KEY);
@@ -65,13 +81,19 @@ export function useAuthController() {
   }, []);
 
   const setPortalMode = useCallback((mode: 'production' | 'qc') => {
+    // Fitters are never allowed to switch to QC mode
+    if (currentUser?.role === 'fitter') {
+      setPortalModeState('production');
+      return;
+    }
     setPortalModeState(mode);
     try {
       localStorage.setItem(PORTAL_MODE_KEY, mode);
+      sessionStorage.setItem(PORTAL_MODE_KEY, mode);
     } catch (e) {
       console.error('Failed to save portal mode', e);
     }
-  }, []);
+  }, [currentUser]);
 
   const setAnimationsEnabled = useCallback((enabled: boolean) => {
     setAnimationsEnabledState(enabled);
@@ -99,9 +121,20 @@ export function useAuthController() {
       const user = await userService.authenticate(pin);
       if (user) {
         setCurrentUser(user);
+        // Persist session across page refreshes in this tab
+        try {
+          sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+        } catch (err) {
+          console.warn('SessionStorage write failed', err);
+        }
         
-        // Determine portal mode
-        const mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
+        // Determine portal mode: fitters are strictly production only
+        let mode: 'production' | 'qc' = 'production';
+        if (user.role === 'fitter') {
+          mode = 'production';
+        } else {
+          mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
+        }
         setPortalMode(mode);
 
         const quote = getRandomQuote(mode, user.role);
@@ -134,8 +167,19 @@ export function useAuthController() {
         const user = await userService.authenticate(username, passwordOrPin);
         if (user) {
           setCurrentUser(user);
+          // Persist session across page refreshes in this tab
+          try {
+            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+          } catch (err) {
+            console.warn('SessionStorage write failed', err);
+          }
           
-          const mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
+          let mode: 'production' | 'qc' = 'production';
+          if (user.role === 'fitter') {
+            mode = 'production';
+          } else {
+            mode = requestedMode || (user.role === 'qc_inspector' || user.role === 'dashboard_viewer' ? 'qc' : 'production');
+          }
           setPortalMode(mode);
 
           const quote = getRandomQuote(mode, user.role);
@@ -198,8 +242,21 @@ export function useAuthController() {
           return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines', 'rework-register', 'reports', 'qc-dashboard', 'qc-registers'].includes(moduleId);
         case 'ppc':
           return ['dashboard', 'job-cards', 'qr-generator', 'assembly-lines', 'reports'].includes(moduleId);
-        case 'fitter':
-          return ['dashboard', 'job-cards', 'assembly-lines', 'rework-register'].includes(moduleId);
+        case 'fitter': {
+          // Fitters NEVER have QC access:
+          if (moduleId.startsWith('qc-') || moduleId === 'qc-management') return false;
+          // Fitters cannot access Admin Portal:
+          if (moduleId === 'admin-portal') return false;
+          // Fitters cannot access executive reports or audit trail:
+          if (moduleId === 'reports' || moduleId === 'audit-trail') return false;
+
+          // If admin explicitly approved dashboard view in permissions:
+          if (moduleId === 'dashboard') {
+            return currentUser.permissions?.view_dashboard === true;
+          }
+          // Default floor modules permitted for fitter:
+          return ['assembly-lines', 'job-cards', 'qr-generator'].includes(moduleId);
+        }
         case 'qc_inspector':
           return ['qc-dashboard', 'qc-shop-floor', 'qc-registers', 'qc-reports', 'dashboard', 'job-cards', 'assembly-lines', 'rework-register'].includes(moduleId);
         case 'dashboard_viewer':
@@ -243,6 +300,14 @@ export function useAuthController() {
     isFitter: currentUser?.role === 'fitter',
     isQCInspector: currentUser?.role === 'qc_inspector',
     isDashboardViewer: currentUser?.role === 'dashboard_viewer',
+    canViewQC: currentUser
+      ? currentUser.role !== 'fitter' &&
+        (currentUser.role === 'admin' ||
+          currentUser.role === 'developer' ||
+          currentUser.role === 'qc_inspector' ||
+          currentUser.role === 'supervisor' ||
+          currentUser.role === 'dashboard_viewer')
+      : false,
     canView,
     requiresApproval,
     loginWithPin,

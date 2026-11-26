@@ -36,7 +36,7 @@ export function ElectricCurrentTracker({
   const [liveElapsed, setLiveElapsed] = useState<string>('00:00:00');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load stages for this panel
+  // Load stages for this panel with auto-sync polling
   useEffect(() => {
     let isMounted = true;
     const fetchStages = async () => {
@@ -52,10 +52,15 @@ export function ElectricCurrentTracker({
       }
     };
     fetchStages();
+
+    // Auto-sync polling every 2.5s: when stage is updated from phone, laptop tracker updates automatically!
+    const pollInterval = setInterval(fetchStages, 2500);
+
     return () => {
       isMounted = false;
+      clearInterval(pollInterval);
     };
-  }, [jobCard.job_card_no]);
+  }, [jobCard.job_card_no, jobCard.current_stage_idx, jobCard.status]);
 
   // Current active stage
   const currentStageIdx = jobCard.current_stage_idx || 0;
