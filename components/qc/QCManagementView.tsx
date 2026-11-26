@@ -962,7 +962,7 @@ export function QCManagementView() {
                 </p>
               </div>
               <div className="text-right">
-                <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold tracking-wider uppercase">
+                <span className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold tracking-wider uppercase shadow-2xs">
                   Quality Audit Report
                 </span>
               </div>

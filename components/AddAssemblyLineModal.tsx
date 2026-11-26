@@ -61,22 +61,22 @@ export function AddAssemblyLineModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden">
         {/* Header */}
-        <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+        <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
               <Factory className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Add New Assembly Line</h3>
-              <p className="text-[11px] text-slate-400">Expand factory floor production lines</p>
+              <h3 className="font-bold text-sm text-white">Add New Assembly Line</h3>
+              <p className="text-[11px] text-blue-100">Expand factory floor production lines</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition"
+            className="text-blue-100 hover:text-white p-1 rounded-lg transition"
           >
             <X className="w-5 h-5" />
           </button>

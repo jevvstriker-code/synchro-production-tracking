@@ -1253,19 +1253,19 @@ export default function HomePage() {
               const linePowerPct = total > 0 ? Math.round((completedCount / total) * 100) : 100;
 
               return (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4 text-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-cyan-400/50 flex items-center justify-center text-cyan-300 spark-indicator">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs">
                       <Zap className="w-5 h-5 fill-current" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-white flex items-center space-x-2">
+                      <h4 className="font-bold text-sm text-slate-900 flex items-center space-x-2">
                         <span>{selectedAssemblyLine} Grid Power Load</span>
-                        <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-700 px-2 py-0.5 rounded-full font-mono font-bold">
+                        <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-mono font-bold">
                           {linePowerPct}% LINE ENERGIZED
                         </span>
                       </h4>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-500 font-medium">
                         {total} Panels Active on Floor • {completedCount} Fully Powered (Done) • {inProgressCount} Under Active Draw
                       </p>
                     </div>
@@ -1274,13 +1274,13 @@ export default function HomePage() {
                   <div className="flex items-center space-x-4 text-xs font-mono">
                     <div className="text-right">
                       <span className="text-slate-400 block text-[10px] uppercase font-bold">Delayed</span>
-                      <strong className={delayedCount > 0 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
+                      <strong className={delayedCount > 0 ? 'text-amber-600 font-bold' : 'text-slate-400'}>
                         {delayedCount} Panels
                       </strong>
                     </div>
                     <div className="text-right">
                       <span className="text-slate-400 block text-[10px] uppercase font-bold">In Flow</span>
-                      <strong className="text-cyan-400 font-bold">{inProgressCount} Active</strong>
+                      <strong className="text-blue-600 font-bold">{inProgressCount} Active</strong>
                     </div>
                   </div>
                 </div>
@@ -1725,16 +1725,16 @@ export default function HomePage() {
       </main>
 
       {/* Enterprise Copyright Footer */}
-      <footer className="mt-auto bg-slate-900 border-t border-slate-800 text-slate-400 py-3.5 px-4 text-center text-xs">
+      <footer className="mt-auto bg-white border-t border-slate-200 text-slate-500 py-4 px-4 text-center text-xs shadow-xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center space-x-2 text-[11px] sm:text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="font-semibold text-slate-200">Synchro Electricals Pvt. Ltd.</span>
-            <span className="text-slate-600 hidden sm:inline">•</span>
-            <span className="text-slate-400">Integrated Shop-Floor Production & QC Intelligence Portal</span>
+            <span className="font-semibold text-slate-800">Synchro Electricals Pvt. Ltd.</span>
+            <span className="text-slate-300 hidden sm:inline">•</span>
+            <span className="text-slate-500">Integrated Shop-Floor Production &amp; QC Intelligence Portal</span>
           </div>
-          <div className="text-[11px] sm:text-xs font-medium text-slate-300">
-            Copyright © <strong className="text-cyan-400">Industrial Dr.</strong> Prepared this app for Synchro Electricals Pvt. Ltd.
+          <div className="text-[11px] sm:text-xs font-medium text-slate-600">
+            Copyright © <strong className="text-blue-600 font-bold">Industrial Dr.</strong> Prepared this app for Synchro Electricals Pvt. Ltd.
           </div>
         </div>
       </footer>

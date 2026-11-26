@@ -124,20 +124,20 @@ export function ElectricCurrentTracker({
     activeNodeIdx !== null ? PRODUCTION_STAGES[activeNodeIdx] : null;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-lg text-white space-y-4 overflow-hidden relative">
-      {/* Decorative High-Voltage Warning Border Strip */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 opacity-80"></div>
+    <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 shadow-xs text-slate-800 space-y-4 overflow-hidden relative">
+      {/* Decorative High-Voltage Header Border Strip */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 opacity-90"></div>
 
       {/* 1. Header: Voltage & Power Status Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
         <div className="flex items-center space-x-2.5">
           <div
-            className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-md transition-all ${
+            className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-2xs transition-all ${
               isCompleted
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 spark-indicator'
+                ? 'bg-emerald-100 text-emerald-600 border border-emerald-200'
                 : isDelayed
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
-                : 'bg-blue-500/20 text-cyan-400 border border-cyan-500/50 spark-indicator'
+                ? 'bg-amber-100 text-amber-600 border border-amber-200'
+                : 'bg-blue-100 text-blue-600 border border-blue-200'
             }`}
           >
             <Zap className="w-4 h-4 fill-current" />
@@ -145,7 +145,7 @@ export function ElectricCurrentTracker({
 
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] uppercase tracking-widest font-black text-slate-400 font-mono">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 font-mono">
                 {isCompleted
                   ? '⚡ 415V 3-PHASE • FULL POWER ENERGIZED'
                   : isDelayed
@@ -155,21 +155,21 @@ export function ElectricCurrentTracker({
               <span
                 className={`text-[9px] px-2 py-0.5 rounded-full font-bold font-mono ${
                   isCompleted
-                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/60'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : isDelayed
-                    ? 'bg-amber-950 text-amber-300 border border-amber-700/60'
-                    : 'bg-cyan-950 text-cyan-300 border border-cyan-700/60'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-blue-50 text-blue-700 border border-blue-200'
                 }`}
               >
                 {powerPercentage}% POWER
               </span>
             </div>
 
-            <h4 className="text-sm font-bold text-white flex items-center space-x-2 mt-0.5">
+            <h4 className="text-sm font-bold text-slate-900 flex items-center space-x-2 mt-0.5">
               <span>{isCompleted ? 'Panel Dispatched & Energized' : `Stage ${currentStageIdx + 1}: ${jobCard.current_stage}`}</span>
               {!isCompleted && liveElapsed !== '00:00:00' && (
-                <span className="text-xs font-mono font-normal text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800 flex items-center space-x-1">
-                  <Clock className="w-3 h-3 text-cyan-400 animate-spin" />
+                <span className="text-xs font-mono font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 flex items-center space-x-1">
+                  <Clock className="w-3 h-3 text-blue-600 animate-spin" />
                   <span>{liveElapsed}</span>
                 </span>
               )}
@@ -182,7 +182,7 @@ export function ElectricCurrentTracker({
           {onOpenReport && (
             <button
               onClick={() => onOpenReport(jobCard)}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-xl text-xs font-semibold transition border border-slate-700"
+              className="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition border border-slate-200 shadow-2xs"
               title="Print Route Sheet Dossier"
             >
               Dossier
@@ -191,7 +191,7 @@ export function ElectricCurrentTracker({
 
           <button
             onClick={() => onOpenWizard(jobCard.job_card_no)}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md transition flex items-center space-x-1"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-xs transition flex items-center space-x-1"
           >
             <span>Update Stage</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -203,21 +203,21 @@ export function ElectricCurrentTracker({
       <div className="overflow-x-auto scrollbar-none pb-2 pt-4 px-1">
         <div className="min-w-[620px] relative px-4">
           {/* Base Unpowered Conduit Track */}
-          <div className="h-2.5 bg-slate-800 rounded-full w-full relative overflow-visible border border-slate-700/60">
+          <div className="h-2.5 bg-slate-200 rounded-full w-full relative overflow-visible border border-slate-300/80">
             {/* Active Electricity Current Running Line */}
             <div
               className={`h-full rounded-full transition-all duration-700 relative ${
                 isCompleted
-                  ? 'electric-full-power'
+                  ? 'bg-emerald-500 shadow-xs'
                   : isDelayed
-                  ? 'electric-delayed'
-                  : 'electric-current-flow'
+                  ? 'bg-amber-500 shadow-xs'
+                  : 'bg-blue-600 shadow-xs'
               }`}
               style={{ width: `${powerPercentage}%` }}
             >
               {/* Electric Current Front Spark Beam */}
               {!isCompleted && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-4 h-4 bg-cyan-300 rounded-full blur-[2px] animate-ping opacity-75"></div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-blue-500 rounded-full blur-[1px] animate-ping opacity-75"></div>
               )}
             </div>
           </div>
@@ -241,13 +241,13 @@ export function ElectricCurrentTracker({
                   <div
                     className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center font-mono text-[10px] font-black transition-all transform duration-300 ${
                       isPast
-                        ? 'bg-emerald-600 border-emerald-400 text-white shadow-[0_0_10px_rgba(16,185,129,0.8)]'
+                        ? 'bg-emerald-600 border-emerald-500 text-white shadow-xs'
                         : isCurrent
                         ? isDelayed
-                          ? 'bg-amber-600 border-amber-300 text-white electric-pulse-node shadow-[0_0_12px_rgba(245,158,11,0.9)] scale-110'
-                          : 'bg-blue-600 border-cyan-300 text-white electric-pulse-node shadow-[0_0_14px_rgba(0,240,255,0.9)] scale-110'
-                        : 'bg-slate-900 border-slate-700 text-slate-500 hover:border-slate-500'
-                    } ${isNodeSelected ? 'ring-2 ring-white scale-115' : ''}`}
+                          ? 'bg-amber-500 border-amber-400 text-white shadow-md scale-110 ring-2 ring-amber-200'
+                          : 'bg-blue-600 border-blue-400 text-white shadow-md scale-110 ring-2 ring-blue-200'
+                        : 'bg-white border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600 shadow-2xs'
+                    } ${isNodeSelected ? 'ring-2 ring-blue-500 scale-115' : ''}`}
                     title={`${idx + 1}. ${stage.name}`}
                   >
                     {isPast ? (
@@ -263,12 +263,12 @@ export function ElectricCurrentTracker({
                   <span
                     className={`text-[9px] mt-1.5 font-semibold text-center tracking-tight transition-colors ${
                       isPast
-                        ? 'text-emerald-400'
+                        ? 'text-emerald-700'
                         : isCurrent
                         ? isDelayed
-                          ? 'text-amber-300 font-bold'
-                          : 'text-cyan-300 font-bold'
-                        : 'text-slate-500'
+                          ? 'text-amber-700 font-bold'
+                          : 'text-blue-700 font-bold'
+                        : 'text-slate-400'
                     }`}
                   >
                     {stageShortTitles[idx]}
@@ -276,11 +276,11 @@ export function ElectricCurrentTracker({
 
                   {/* Duration pill under node */}
                   {stageData?.duration_hours && Number(stageData.duration_hours) > 0 ? (
-                    <span className="text-[8px] font-mono text-slate-400 mt-0.5">
+                    <span className="text-[8px] font-mono text-slate-500 mt-0.5">
                       {Number(stageData.duration_hours).toFixed(1)}h
                     </span>
                   ) : isCurrent ? (
-                    <span className="text-[8px] font-mono text-cyan-400 font-bold mt-0.5">
+                    <span className="text-[8px] font-mono text-blue-600 font-bold mt-0.5">
                       Live
                     </span>
                   ) : null}
@@ -293,13 +293,13 @@ export function ElectricCurrentTracker({
 
       {/* 3. Inline Quick Stage Inspector (Shows on node tap without opening window) */}
       {selectedStageDef && activeNodeIdx !== null && (
-        <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs animate-in fade-in duration-200 space-y-2">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+        <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs shadow-xs animate-in fade-in duration-200 space-y-2">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
             <div className="flex items-center space-x-2">
-              <span className="font-mono text-cyan-400 font-bold">
+              <span className="font-mono text-blue-600 font-bold">
                 Stage {activeNodeIdx + 1}:
               </span>
-              <strong className="text-white text-xs">{selectedStageDef.name}</strong>
+              <strong className="text-slate-900 text-xs">{selectedStageDef.name}</strong>
               <span className="text-[10px] text-slate-400">
                 (Std Target: {selectedStageDef.standardDurationHrs}h)
               </span>
@@ -307,23 +307,23 @@ export function ElectricCurrentTracker({
 
             <button
               onClick={() => setActiveNodeIdx(null)}
-              className="text-[10px] text-slate-400 hover:text-white underline"
+              className="text-[10px] text-slate-400 hover:text-slate-700 underline"
             >
               Close Info
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-300">{selectedStageDef.description}</p>
+          <p className="text-[11px] text-slate-600">{selectedStageDef.description}</p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[10px] text-slate-400">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[10px] text-slate-500">
             <div>
               <span>Status:</span>{' '}
               <strong
                 className={
                   selectedStageData?.status === 'completed'
-                    ? 'text-emerald-400'
+                    ? 'text-emerald-600 font-bold'
                     : selectedStageData?.status === 'in_progress'
-                    ? 'text-cyan-400'
+                    ? 'text-blue-600 font-bold'
                     : 'text-slate-500'
                 }
               >
@@ -332,13 +332,13 @@ export function ElectricCurrentTracker({
             </div>
             <div>
               <span>Operator:</span>{' '}
-              <strong className="text-slate-200">
+              <strong className="text-slate-800">
                 {selectedStageData?.operator_name || 'Floor Team'}
               </strong>
             </div>
             <div>
               <span>Duration:</span>{' '}
-              <strong className="text-slate-200">
+              <strong className="text-slate-800">
                 {selectedStageData?.duration_display ||
                   (selectedStageData?.duration_hours
                     ? `${selectedStageData.duration_hours}h`
@@ -350,7 +350,7 @@ export function ElectricCurrentTracker({
               <strong
                 className={
                   selectedStageData?.delay_reason && selectedStageData.delay_reason !== 'None'
-                    ? 'text-amber-400'
+                    ? 'text-amber-600 font-bold'
                     : 'text-slate-400'
                 }
               >
@@ -362,23 +362,23 @@ export function ElectricCurrentTracker({
       )}
 
       {/* 4. Bottom Power Conduit Footnote */}
-      <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[10px] text-slate-400">
+      <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-[10px] text-slate-500">
         <div className="flex items-center space-x-3">
           <span>
-            Supervisor: <strong className="text-slate-200">{jobCard.supervisor_name}</strong>
+            Supervisor: <strong className="text-slate-700">{jobCard.supervisor_name}</strong>
           </span>
           <span>•</span>
           <span>
-            PPC: <strong className="text-slate-200">{jobCard.ppc_name}</strong>
+            PPC: <strong className="text-slate-700">{jobCard.ppc_name}</strong>
           </span>
           <span>•</span>
           <span>
-            Type: <strong className="text-slate-200">{jobCard.panel_type}</strong>
+            Type: <strong className="text-slate-700">{jobCard.panel_type}</strong>
           </span>
         </div>
 
-        <div className="hidden sm:flex items-center space-x-1.5 text-slate-500">
-          <Info className="w-3 h-3 text-cyan-400" />
+        <div className="hidden sm:flex items-center space-x-1.5 text-slate-400">
+          <Info className="w-3 h-3 text-blue-500" />
           <span>Click any contact node to inspect stage details inline</span>
         </div>
       </div>

@@ -267,7 +267,7 @@ export function ImportExportModal({
   const totalCurrentRecords = Object.values(tableCounts).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
@@ -460,7 +460,7 @@ export function ImportExportModal({
                   <button
                     onClick={() => handleExport(selectedExportTables)}
                     disabled={selectedExportTables.length === 0 || isExporting}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center space-x-2 disabled:opacity-40"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-xs transition flex items-center space-x-2 disabled:opacity-40"
                   >
                     <Download className="w-4 h-4" />
                     <span>
@@ -611,7 +611,7 @@ export function ImportExportModal({
                           {previewTable ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </button>
                         {previewTable && (
-                          <div className="p-3 bg-slate-900 text-slate-100 font-mono text-[11px] max-h-48 overflow-y-auto">
+                          <div className="p-3 bg-slate-50 border-t border-slate-200 text-slate-800 font-mono text-[11px] max-h-48 overflow-y-auto">
                             <pre className="whitespace-pre-wrap">
                               {JSON.stringify(
                                 validationResult.parsedTables[previewTable]?.slice(0, 2),
