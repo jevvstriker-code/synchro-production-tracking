@@ -471,20 +471,22 @@ export default function HomePage() {
     );
   });
 
-  // If not logged in, render the dedicated Operations Portal Gateway Screen
+  // 1. If animations are enabled and opening splash is active, render ONLY the Opening Splash Screen
+  if (animationsEnabled && showSplash) {
+    return (
+      <OpeningSplashAnimation
+        onFinish={() => {
+          setShowSplash(false);
+        }}
+      />
+    );
+  }
+
+  // 2. If not logged in, render the dedicated Operations Portal Gateway Screen
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col antialiased text-slate-800">
-        {/* 0. Opening Splash Animation */}
-        {animationsEnabled && showSplash && (
-          <OpeningSplashAnimation
-            onFinish={() => {
-              setShowSplash(false);
-            }}
-          />
-        )}
-
-        {/* 0.1 Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
+      <div className="min-h-screen bg-[#f8fbff] flex flex-col antialiased text-slate-800">
+        {/* Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
         {welcomeModalData && (
           <WelcomeCelebrationModal
             user={welcomeModalData.user}

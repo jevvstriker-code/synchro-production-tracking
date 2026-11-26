@@ -32,7 +32,7 @@ export function WelcomeCelebrationModal({
   return (
     <div
       onClick={onFinish}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 select-none cursor-pointer animate-in fade-in duration-300"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 select-none cursor-pointer animate-in fade-in duration-300"
     >
       {/* Background ambient lighting */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
