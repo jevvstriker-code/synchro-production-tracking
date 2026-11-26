@@ -16,6 +16,17 @@ export const userService = {
     return (data || []) as AppUser[];
   },
 
+  async getUserById(id: string): Promise<AppUser | null> {
+    const { data, error } = await supabase
+      .from('app_users')
+      .select('id, username, full_name, role, pin_code, phone, is_active, permissions, created_at, updated_at')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as AppUser;
+  },
+
   async authenticate(identifier: string, secret?: string): Promise<AppUser | null> {
     const cleanId = identifier.trim();
     const cleanSecret = (secret || '').trim();

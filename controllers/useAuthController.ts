@@ -15,7 +15,22 @@ export function useAuthController() {
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
-        setCurrentUser(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setCurrentUser(parsed);
+        // Refresh fresh permissions and profile from Supabase in background
+        if (parsed?.id) {
+          userService.getUserById(parsed.id).then((fresh) => {
+            if (fresh && fresh.is_active) {
+              setCurrentUser(fresh);
+              localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(fresh));
+            } else if (fresh && !fresh.is_active) {
+              setCurrentUser(null);
+              localStorage.removeItem(AUTH_STORAGE_KEY);
+            }
+          }).catch((err) => {
+            console.warn('Could not refresh user permissions in background', err);
+          });
+        }
       }
     } catch (e) {
       console.error('Failed to parse auth user from storage', e);
