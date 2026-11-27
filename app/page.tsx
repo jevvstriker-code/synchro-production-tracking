@@ -83,14 +83,12 @@ export default function HomePage() {
   // Splash Screen State
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
-  // When not logged in and animations are done or disabled, ensure login gateway is open
+  // Automatically ensure login modal is closed when user is authenticated
   useEffect(() => {
-    if (!isLoggedIn) {
-      if (!animationsEnabled || !showSplash) {
-        setIsLoginModalOpen(true);
-      }
+    if (isLoggedIn) {
+      setIsLoginModalOpen(false);
     }
-  }, [isLoggedIn, animationsEnabled, showSplash]);
+  }, [isLoggedIn]);
 
   // Production Dashboard Date Filter State
   const [prodPeriod, setProdPeriod] = useState<string>('all');
@@ -525,7 +523,7 @@ export default function HomePage() {
   // 2. If not logged in, render the dedicated Operations Portal Gateway Screen
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#050811] cyber-grid-bg flex flex-col antialiased text-slate-100">
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col antialiased text-slate-800">
         {/* Post-Login Welcome Celebration Animation with Name & Pun/Quote */}
         {welcomeModalData && (
           <WelcomeCelebrationModal
@@ -537,7 +535,13 @@ export default function HomePage() {
         )}
 
         {/* Dedicated Operations Portal Gateway Screen matching user design */}
-        <OperationsPortalGateway onSuccess={loadAllData} />
+        <OperationsPortalGateway
+          onClose={() => setIsLoginModalOpen(false)}
+          onSuccess={() => {
+            setIsLoginModalOpen(false);
+            loadAllData();
+          }}
+        />
       </div>
     );
   }
@@ -1808,10 +1812,13 @@ export default function HomePage() {
 
       {/* 4. Staff Login Gateway & Modal */}
       <LoginModal
-        isOpen={isLoginModalOpen || !isLoggedIn}
+        isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
-        onSuccess={loadAllData}
-        closable={isLoggedIn}
+        onSuccess={() => {
+          setIsLoginModalOpen(false);
+          loadAllData();
+        }}
+        closable={true}
       />
 
       {/* 5. Add Rework Modal */}

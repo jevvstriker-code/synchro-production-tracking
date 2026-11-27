@@ -21,8 +21,8 @@ export function LoginModal({ isOpen, onClose, onSuccess, closable = true }: Logi
         closable={closable}
         onClose={onClose}
         onSuccess={() => {
-          if (onSuccess) onSuccess();
           onClose();
+          if (onSuccess) onSuccess();
         }}
       />
     </div>

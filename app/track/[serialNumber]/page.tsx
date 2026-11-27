@@ -112,6 +112,12 @@ export default function TrackPanelPage({
     };
   }, [stages]);
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      setIsLoginModalOpen(false);
+    }
+  }, [isLoggedIn]);
+
   const handleUpdateClick = () => {
     if (isLoggedIn) {
       setIsWizardOpen(true);
@@ -121,6 +127,7 @@ export default function TrackPanelPage({
   };
 
   const handleLoginSuccess = () => {
+    setIsLoginModalOpen(false);
     setIsWizardOpen(true);
   };
 

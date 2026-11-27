@@ -57,8 +57,8 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
     if (/^\d{4}$/.test(idVal) && !passVal) {
       const user = await loginWithPin(idVal, selectedApp);
       if (user) {
-        if (onSuccess) onSuccess();
         if (onClose) onClose();
+        if (onSuccess) onSuccess();
       } else {
         setLocalError('Invalid quick PIN code or account inactive.');
       }
@@ -72,8 +72,8 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
 
     const user = await loginWithCredentials(idVal, passVal, selectedApp);
     if (user) {
-      if (onSuccess) onSuccess();
       if (onClose) onClose();
+      if (onSuccess) onSuccess();
     } else {
       setLocalError('Invalid credentials. Please verify your username and password.');
     }
@@ -89,8 +89,8 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
           const user = await loginWithPin(nextPin, selectedApp);
           if (user) {
             setPin('');
-            if (onSuccess) onSuccess();
             if (onClose) onClose();
+            if (onSuccess) onSuccess();
           } else {
             setLocalError('Invalid PIN code.');
             setPin('');
@@ -106,8 +106,8 @@ export function OperationsPortalGateway({ onSuccess, closable = false, onClose }
     setSelectedApp(mode);
     const user = await loginWithPin(rolePin, mode);
     if (user) {
-      if (onSuccess) onSuccess();
       if (onClose) onClose();
+      if (onSuccess) onSuccess();
     }
   };
 
